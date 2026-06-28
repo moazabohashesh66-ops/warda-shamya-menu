@@ -3,10 +3,8 @@ import { menuData } from '@/data/menuData';
 
 export async function GET() {
   try {
-    console.log('✅ جلب البيانات من الملف المحلي');
     return NextResponse.json(menuData);
   } catch (error) {
-    console.error('❌ خطأ:', error);
     return NextResponse.json({ error: 'حدث خطأ' }, { status: 500 });
   }
 }
