@@ -1,0 +1,299 @@
+export interface Product {
+  id: string;
+  name: string;
+  nameEn: string;
+  description?: string;
+  price: number;
+  image?: string;
+  isAvailable: boolean;
+  isPopular?: boolean;
+  isNew?: boolean;
+  size?: string;
+  weight?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  nameEn: string;
+  icon: string;
+  image?: string;
+  products: Product[];
+}
+
+export const menuData: Category[] = [
+  // ====== 1. فراخ شواية وبروست ======
+  {
+    id: "grill",
+    name: "فراخ شواية وبروست",
+    nameEn: "Grilled & Fried Chicken",
+    icon: "🍗",
+    image: "https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=800&h=400&fit=crop",
+    products: [
+      { id: "g1", name: "نصف فرخة شواية", nameEn: "Half Grilled Chicken", price: 250, description: "أرز - بطاطس - ثومية - مخلل - عيش", isAvailable: true, isPopular: true },
+      { id: "g2", name: "ربع فرخة شواية صدر", nameEn: "Quarter Grilled Breast", price: 140, description: "أرز - بطاطس - ثومية - مخلل - عيش", isAvailable: true },
+      { id: "g3", name: "ربع فرخة شواية ورك", nameEn: "Quarter Grilled Thigh", price: 130, description: "أرز - بطاطس - ثومية - مخلل - عيش", isAvailable: true },
+      { id: "g4", name: "نصف فرخة بروستد", nameEn: "Half Fried Chicken", price: 260, description: "أرز - بطاطس - ثومية - مخلل - عيش", isAvailable: true },
+      { id: "g5", name: "وجبة دبوس بروستد", nameEn: "Fried Drumstick Meal", price: 180, description: "3 قطع - أرز - بطاطس - ثومية - مخلل - عيش", isAvailable: true },
+      { id: "g6", name: "وجبة جوانح", nameEn: "Chicken Wings Meal", price: 175, description: "5 قطع - بطاطس - ثومية - مخلل - كول سلو", isAvailable: true }
+    ]
+  },
+
+  // ====== 2. شاورما فراخ ======
+  {
+    id: "shawarma",
+    name: "شاورما فراخ",
+    nameEn: "Chicken Shawarma",
+    icon: "🌯",
+    image: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800&h=400&fit=crop",
+    products: [
+      { id: "s1", name: "شاورما فراخ", nameEn: "Chicken Shawarma", price: 110, isAvailable: true, isPopular: true },
+      { id: "s2", name: "شاورما فراخ دبل", nameEn: "Double Shawarma", price: 125, isAvailable: true },
+      { id: "s3", name: "شاورما فراخ فرنساوي", nameEn: "French Shawarma", price: 125, isAvailable: true },
+      { id: "s4", name: "شاورما فراخ كايزر", nameEn: "Kaiser Shawarma", price: 85, isAvailable: true },
+      { id: "s5", name: "شاورما فراخ إكسترا", nameEn: "Extra Shawarma", price: 135, description: "موتزاريلا + مشروم", isAvailable: true },
+      { id: "s6", name: "شاورما عيش شامي", nameEn: "Syrian Bread Shawarma", price: 110, isAvailable: true },
+      { id: "s7", name: "شاورما فراخ عربي (شخص)", nameEn: "Arabic Shawarma (1 Person)", price: 190, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
+      { id: "s8", name: "شاورما فراخ عربي (شخصين)", nameEn: "Arabic Shawarma (2 Persons)", price: 375, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
+      { id: "s9", name: "شاورما فراخ عربي (3 أشخاص)", nameEn: "Arabic Shawarma (3 Persons)", price: 550, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
+      { id: "s10", name: "شاورما فراخ عربي (عائلي)", nameEn: "Family Arabic Shawarma", price: 710, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
+      { id: "s11", name: "شاورما فراخ عربي إكسترا", nameEn: "Extra Arabic Shawarma", price: 225, description: "موتزاريلا + مشروم + بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
+      { id: "s12", name: "وجبة ماريا", nameEn: "Maria Meal", price: 225, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
+      { id: "s13", name: "فتة شاورما فراخ (كبير)", nameEn: "Large Shawarma Fatteh", price: 200, description: "مخلل + ثومية + بطاطس", isAvailable: true },
+      { id: "s14", name: "فتة شاورما فراخ إكسترا", nameEn: "Extra Shawarma Fatteh", price: 225, description: "موتزاريلا + مشروم + مخلل + ثومية + بطاطس", isAvailable: true },
+      { id: "s15", name: "كيلو شاورما فراخ", nameEn: "1kg Shawarma", price: 1000, description: "ثومية + مخلل + عيش + بطاطس", isAvailable: true },
+      { id: "s16", name: "نصف كيلو شاورما فراخ", nameEn: "½kg Shawarma", price: 500, description: "ثومية + مخلل + عيش + بطاطس", isAvailable: true },
+      { id: "s17", name: "ربع كيلو شاورما فراخ", nameEn: "¼kg Shawarma", price: 250, description: "ثومية + مخلل + عيش + بطاطس", isAvailable: true }
+    ]
+  },
+
+  // ====== 3. البيتزا والصفيحة ======
+  {
+    id: "pizza",
+    name: "البيتزا والصفيحة",
+    nameEn: "Pizza & Sfeeha",
+    icon: "🍕",
+    image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=800&h=400&fit=crop",
+    products: [
+      { id: "p1", name: "بيتزا فصول أربعة", nameEn: "Four Seasons", price: 125, size: "وسط", isAvailable: true },
+      { id: "p2", name: "بيتزا فصول أربعة", nameEn: "Four Seasons", price: 150, size: "كبير", isAvailable: true },
+      { id: "p3", name: "بيتزا مارجريتا", nameEn: "Margherita", price: 115, size: "وسط", isAvailable: true },
+      { id: "p4", name: "بيتزا مارجريتا", nameEn: "Margherita", price: 135, size: "كبير", isAvailable: true },
+      { id: "p5", name: "بيتزا مشروم", nameEn: "Mushroom", price: 130, size: "وسط", isAvailable: true },
+      { id: "p6", name: "بيتزا مشروم", nameEn: "Mushroom", price: 150, size: "كبير", isAvailable: true },
+      { id: "p7", name: "بيتزا تركي مدخن", nameEn: "Smoked Turkey", price: 160, size: "وسط", isAvailable: true },
+      { id: "p8", name: "بيتزا تركي مدخن", nameEn: "Smoked Turkey", price: 190, size: "كبير", isAvailable: true },
+      { id: "p9", name: "بيتزا شاورما فراخ", nameEn: "Chicken Shawarma", price: 170, size: "وسط", isAvailable: true },
+      { id: "p10", name: "بيتزا شاورما فراخ", nameEn: "Chicken Shawarma", price: 190, size: "كبير", isAvailable: true },
+      { id: "p11", name: "بيتزا سجق", nameEn: "Sausage", price: 175, size: "وسط", isAvailable: true },
+      { id: "p12", name: "بيتزا سجق", nameEn: "Sausage", price: 195, size: "كبير", isAvailable: true },
+      { id: "p13", name: "بيتزا لحمة مفرومة", nameEn: "Minced Meat", price: 175, size: "وسط", isAvailable: true },
+      { id: "p14", name: "بيتزا لحمة مفرومة", nameEn: "Minced Meat", price: 195, size: "كبير", isAvailable: true },
+      { id: "p15", name: "بيتزا فراخ", nameEn: "Chicken", price: 160, size: "وسط", isAvailable: true },
+      { id: "p16", name: "بيتزا فراخ", nameEn: "Chicken", price: 185, size: "كبير", isAvailable: true },
+      { id: "p17", name: "بيتزا بيبيروني", nameEn: "Pepperoni", price: 160, size: "وسط", isAvailable: true },
+      { id: "p18", name: "بيتزا بيبيروني", nameEn: "Pepperoni", price: 180, size: "كبير", isAvailable: true },
+      { id: "p19", name: "بيتزا مشكل جبن", nameEn: "Mixed Cheese", price: 150, size: "وسط", isAvailable: true },
+      { id: "p20", name: "بيتزا مشكل جبن", nameEn: "Mixed Cheese", price: 170, size: "كبير", isAvailable: true },
+      { id: "p21", name: "بيتزا سوسيس", nameEn: "Sausage", price: 140, size: "وسط", isAvailable: true },
+      { id: "p22", name: "بيتزا سوسيس", nameEn: "Sausage", price: 175, size: "كبير", isAvailable: true },
+      { id: "p23", name: "بيتزا فراخ باربيكيو", nameEn: "BBQ Chicken", price: 170, size: "وسط", isAvailable: true },
+      { id: "p24", name: "بيتزا فراخ باربيكيو", nameEn: "BBQ Chicken", price: 195, size: "كبير", isAvailable: true },
+      { id: "p25", name: "بيتزا وردة شامية", nameEn: "Warda Shamya", price: 200, size: "وسط", isAvailable: true, isPopular: true },
+      { id: "p26", name: "بيتزا وردة شامية", nameEn: "Warda Shamya", price: 230, size: "كبير", isAvailable: true },
+      { id: "p27", name: "بيتزا رانش", nameEn: "Ranch", price: 170, size: "وسط", isAvailable: true },
+      { id: "p28", name: "بيتزا رانش", nameEn: "Ranch", price: 195, size: "كبير", isAvailable: true },
+      { id: "sf1", name: "صفيحة خضار", nameEn: "Vegetable Sfeeha", price: 900, weight: "كيلو", isAvailable: true },
+      { id: "sf2", name: "صفيحة خضار", nameEn: "Vegetable Sfeeha", price: 450, weight: "نصف كيلو", isAvailable: true },
+      { id: "sf3", name: "صفيحة خضار", nameEn: "Vegetable Sfeeha", price: 225, weight: "ربع كيلو", isAvailable: true },
+      { id: "sf4", name: "صفيحة لحم", nameEn: "Meat Sfeeha", price: 900, weight: "كيلو", isAvailable: true },
+      { id: "sf5", name: "صفيحة لحم", nameEn: "Meat Sfeeha", price: 450, weight: "نصف كيلو", isAvailable: true },
+      { id: "sf6", name: "صفيحة لحم", nameEn: "Meat Sfeeha", price: 225, weight: "ربع كيلو", isAvailable: true }
+    ]
+  },
+
+  // ====== 4. وجبات غربي ======
+  {
+    id: "western",
+    name: "وجبات غربي",
+    nameEn: "Western Meals",
+    icon: "🍔",
+    image: "https://images.unsplash.com/photo-1558030006-450675393462?w=800&h=400&fit=crop",
+    products: [
+      { id: "w1", name: "كوردن بلو", nameEn: "Cordon Bleu", price: 325, isAvailable: true, isPopular: true },
+      { id: "w2", name: "تشيكن رول سوبريم", nameEn: "Chicken Roll Supreme", price: 300, isAvailable: true },
+      { id: "w3", name: "شيش طاووق", nameEn: "Shish Tawook", price: 250, isAvailable: true, isPopular: true },
+      { id: "w4", name: "كريسبي", nameEn: "Crispy", price: 250, isAvailable: true },
+      { id: "w5", name: "زنجر مع شيدر", nameEn: "Zinger with Cheddar", price: 275, isAvailable: true },
+      { id: "w6", name: "مكسيكانو", nameEn: "Mexicano", price: 250, isAvailable: true },
+      { id: "w7", name: "وردة شامية", nameEn: "Warda Shamya", price: 250, isAvailable: true, isPopular: true },
+      { id: "w8", name: "تشيكن ساب", nameEn: "Chicken Sub", price: 250, isAvailable: true },
+      { id: "w9", name: "فرانسيسكو", nameEn: "Francisco", price: 250, isAvailable: true },
+      { id: "w10", name: "إسكالوب", nameEn: "Escalope", price: 250, isAvailable: true },
+      { id: "w11", name: "فاهيتا", nameEn: "Fajita", price: 275, isAvailable: true },
+      { id: "w12", name: "فيلادلفيا لحمة", nameEn: "Philadelphia Meat", price: 300, isAvailable: true },
+      { id: "w13", name: "ناغيتو", nameEn: "Nagito", price: 220, isAvailable: true },
+      { id: "w14", name: "ميكس", nameEn: "Mix", price: 300, isAvailable: true },
+      { id: "w15", name: "وجبة برجر فراخ", nameEn: "Chicken Burger Meal", price: 225, isAvailable: true },
+      { id: "w16", name: "وجبة برجر لحمة", nameEn: "Meat Burger Meal", price: 250, isAvailable: true },
+      { id: "w17", name: "تشيكن ساب", nameEn: "Chicken Sub", price: 120, isAvailable: true },
+      { id: "w18", name: "كريسبي", nameEn: "Crispy", price: 125, isAvailable: true },
+      { id: "w19", name: "تشيكن رول سوبريم", nameEn: "Chicken Roll Supreme", price: 140, isAvailable: true },
+      { id: "w20", name: "إسكالوب بانية", nameEn: "Escalope Panee", price: 130, isAvailable: true },
+      { id: "w21", name: "شرحات فراخ بالليمون", nameEn: "Lemon Chicken", price: 125, isAvailable: true },
+      { id: "w22", name: "برجر فراخ", nameEn: "Chicken Burger", price: 125, isAvailable: true },
+      { id: "w23", name: "برجر لحمة بلدي", nameEn: "Meat Burger", price: 150, isAvailable: true },
+      { id: "w24", name: "فيلادلفيا لحمة", nameEn: "Philadelphia Meat", price: 160, isAvailable: true },
+      { id: "w25", name: "فرانسيسكو", nameEn: "Francisco", price: 125, isAvailable: true },
+      { id: "w26", name: "شيش طاووق", nameEn: "Shish Tawook", price: 125, isAvailable: true },
+      { id: "w27", name: "زنجر", nameEn: "Zinger", price: 130, isAvailable: true },
+      { id: "w28", name: "فاهيتا", nameEn: "Fajita", price: 140, isAvailable: true },
+      { id: "w29", name: "مكسيكانو", nameEn: "Mexicano", price: 130, isAvailable: true },
+      { id: "w30", name: "ناغيتو", nameEn: "Nagito", price: 125, isAvailable: true },
+      { id: "w31", name: "بطاطس صاج", nameEn: "Saj Potatoes", price: 60, isAvailable: true },
+      { id: "w32", name: "بطاطس صاج موتزاريلا", nameEn: "Saj Mozzarella", price: 70, isAvailable: true },
+      { id: "w33", name: "بطاطس فرنساوي", nameEn: "French Potatoes", price: 70, isAvailable: true },
+      { id: "w34", name: "بطاطس فرنساوي موتزاريلا", nameEn: "French Mozzarella", price: 75, isAvailable: true },
+      { id: "w35", name: "بطاطس جبنة شيدر", nameEn: "Cheddar Potatoes", price: 70, isAvailable: true },
+      { id: "w36", name: "بطاطس فرنساوي جبنة شيدر", nameEn: "French Cheddar", price: 75, isAvailable: true }
+    ]
+  },
+
+  // ====== 5. مناقيش ======
+  {
+    id: "manakeesh",
+    name: "مناقيش",
+    nameEn: "Manakeesh",
+    icon: "🥙",
+    image: "https://images.unsplash.com/photo-1585238342024-78d387f4a707?w=800&h=400&fit=crop",
+    products: [
+      { id: "m1", name: "كرافت", nameEn: "Kraft", price: 35, isAvailable: true },
+      { id: "m2", name: "لبنة", nameEn: "Labneh", price: 35, isAvailable: true },
+      { id: "m3", name: "كيري", nameEn: "Kiri", price: 35, isAvailable: true },
+      { id: "m4", name: "موتزاريلا", nameEn: "Mozzarella", price: 35, isAvailable: true },
+      { id: "m5", name: "حلوم", nameEn: "Halloumi", price: 40, isAvailable: true },
+      { id: "m6", name: "جبنة عكاوي", nameEn: "Akkawi Cheese", price: 35, isAvailable: true },
+      { id: "m7", name: "شيدر", nameEn: "Cheddar", price: 35, isAvailable: true },
+      { id: "m8", name: "شامية", nameEn: "Shamiya", price: 35, isAvailable: true },
+      { id: "m9", name: "زعتر", nameEn: "Zaatar", price: 30, isAvailable: true },
+      { id: "m10", name: "محمرة", nameEn: "Muhammara", price: 25, isAvailable: true },
+      { id: "m11", name: "سبانخ", nameEn: "Spinach", price: 30, isAvailable: true },
+      { id: "m12", name: "سوسيس كرافت", nameEn: "Sausage Kraft", price: 55, isAvailable: true },
+      { id: "m13", name: "سلامي كرافت", nameEn: "Salami Kraft", price: 55, isAvailable: true },
+      { id: "m14", name: "تركي مدخن كرافت", nameEn: "Smoked Turkey Kraft", price: 50, isAvailable: true },
+      { id: "m15", name: "لانشون كرافت", nameEn: "Lunchon Kraft", price: 50, isAvailable: true },
+      { id: "m16", name: "مكس جبن", nameEn: "Mixed Cheese", price: 50, isAvailable: true },
+      { id: "m17", name: "حلوم مع زعتر بالخضروات", nameEn: "Halloumi Zaatar Veg", price: 50, isAvailable: true },
+      { id: "m18", name: "حلوم مع زعتر", nameEn: "Halloumi Zaatar", price: 45, isAvailable: true },
+      { id: "m19", name: "حلوم مع زيتون", nameEn: "Halloumi Olive", price: 45, isAvailable: true },
+      { id: "m20", name: "لبنة مع زعتر", nameEn: "Labneh Zaatar", price: 40, isAvailable: true },
+      { id: "m21", name: "لبنة زيتون", nameEn: "Labneh Olive", price: 40, isAvailable: true },
+      { id: "m22", name: "لبنة بالخضروات", nameEn: "Labneh Veg", price: 40, isAvailable: true },
+      { id: "m23", name: "كيري مع لانشون", nameEn: "Kiri Lunchon", price: 50, isAvailable: true },
+      { id: "m24", name: "محمرة مع موتزاريلا", nameEn: "Muhammara Mozzarella", price: 40, isAvailable: true },
+      { id: "m25", name: "زعتر مع موتزاريلا", nameEn: "Zaatar Mozzarella", price: 40, isAvailable: true },
+      { id: "m26", name: "زعتر مع محمرة", nameEn: "Zaatar Muhammara", price: 40, isAvailable: true },
+      { id: "m27", name: "لانشون مع موتزاريلا", nameEn: "Lunchon Mozzarella", price: 50, isAvailable: true },
+      { id: "m28", name: "سبانخ مع موتزاريلا", nameEn: "Spinach Mozzarella", price: 50, isAvailable: true },
+      { id: "m29", name: "شيدر مع موتزاريلا", nameEn: "Cheddar Mozzarella", price: 45, isAvailable: true },
+      { id: "m30", name: "سجق اسكندراني وسط", nameEn: "Alexandria Sausage M", price: 120, isAvailable: true },
+      { id: "m31", name: "سجق اسكندراني كبير", nameEn: "Alexandria Sausage L", price: 150, isAvailable: true },
+      { id: "m32", name: "لحمة بعجين", nameEn: "Meat Dough", price: 50, isAvailable: true },
+      { id: "m33", name: "لحمة بالموتزاريلا", nameEn: "Meat Mozzarella", price: 65, isAvailable: true },
+      { id: "m34", name: "سجق موتزاريلا", nameEn: "Sausage Mozzarella", price: 65, isAvailable: true },
+      { id: "m35", name: "شيش طاووق موتزاريلا", nameEn: "Shish Tawook Mozzarella", price: 65, isAvailable: true },
+      { id: "m36", name: "شاورما موتزاريلا", nameEn: "Shawarma Mozzarella", price: 75, isAvailable: true },
+      { id: "m37", name: "سوسيس موتزاريلا", nameEn: "Sausage Mozzarella", price: 60, isAvailable: true },
+      { id: "m38", name: "سلامي موتزاريلا", nameEn: "Salami Mozzarella", price: 60, isAvailable: true },
+      { id: "m39", name: "تركي مدخن موتزاريلا", nameEn: "Smoked Turkey Mozzarella", price: 65, isAvailable: true }
+    ]
+  },
+
+  // ====== 6. مقبلات وسلطات ======
+  {
+    id: "appetizers",
+    name: "مقبلات وسلطات",
+    nameEn: "Appetizers & Salads",
+    icon: "🥗",
+    image: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=800&h=400&fit=crop",
+    products: [
+      { id: "a1", name: "محمرة عين جمل", nameEn: "Muhammara", price: 100, isAvailable: true },
+      { id: "a2", name: "متبل", nameEn: "Mutabbal", price: 75, isAvailable: true },
+      { id: "a3", name: "متبل بنجر", nameEn: "Beetroot Mutabbal", price: 100, isAvailable: true },
+      { id: "a4", name: "كبيبة شامية", nameEn: "Syrian Kibbeh", price: 50, isAvailable: true },
+      { id: "a5", name: "سمبوسك جبنة", nameEn: "Cheese Sambousek", price: 30, isAvailable: true },
+      { id: "a6", name: "مخلل", nameEn: "Pickles", price: 40, isAvailable: true },
+      { id: "a7", name: "باكيت بطاطس", nameEn: "Fries Pack", price: 50, isAvailable: true },
+      { id: "a8", name: "ثومية", nameEn: "Garlic Sauce", price: 75, isAvailable: true },
+      { id: "a9", name: "أصابع موزريلا", nameEn: "Mozzarella Sticks", price: 70, isAvailable: true },
+      { id: "a10", name: "حمص بالطحينة", nameEn: "Hummus", price: 75, isAvailable: true },
+      { id: "a11", name: "بابا غنوج", nameEn: "Baba Ghanouj", price: 75, isAvailable: true },
+      { id: "a12", name: "يالنجي", nameEn: "Yalanji", price: 60, isAvailable: true },
+      { id: "a13", name: "طبق أرز", nameEn: "Rice Plate", price: 50, isAvailable: true },
+      { id: "a14", name: "ثومية سبايسي", nameEn: "Spicy Garlic", price: 75, isAvailable: true },
+      { id: "a15", name: "تبولة", nameEn: "Tabbouleh", price: 90, isAvailable: true },
+      { id: "a16", name: "فتوش", nameEn: "Fattoush", price: 80, isAvailable: true },
+      { id: "a17", name: "جرجير", nameEn: "Arugula", price: 75, isAvailable: true },
+      { id: "a18", name: "سلطة خضراء", nameEn: "Green Salad", price: 75, isAvailable: true },
+      { id: "a19", name: "كول سلو", nameEn: "Coleslaw", price: 75, isAvailable: true },
+      { id: "a20", name: "شوربة عدس", nameEn: "Lentil Soup", price: 95, isAvailable: true },
+      { id: "a21", name: "شوربة كريمة سادة", nameEn: "Cream Soup", price: 100, isAvailable: true },
+      { id: "a22", name: "شوربة كريمة مشروم", nameEn: "Mushroom Cream", price: 120, isAvailable: true },
+      { id: "a23", name: "شوربة كريمة فراخ", nameEn: "Chicken Cream", price: 140, isAvailable: true },
+      { id: "a24", name: "شوربة الفريدو", nameEn: "Fettuccine Soup", price: 160, isAvailable: true },
+      { id: "a25", name: "شوربة مكس", nameEn: "Mixed Soup", price: 140, isAvailable: true },
+      { id: "a26", name: "برك جبنة", nameEn: "Cheese Borek", price: 25, isAvailable: true },
+      { id: "a27", name: "برك سبانخ", nameEn: "Spinach Borek", price: 25, isAvailable: true },
+      { id: "a28", name: "برك زيتون", nameEn: "Olive Borek", price: 25, isAvailable: true },
+      { id: "a29", name: "برك سجق", nameEn: "Sausage Borek", price: 25, isAvailable: true },
+      { id: "a30", name: "برك كيري", nameEn: "Kiri Borek", price: 25, isAvailable: true },
+      { id: "a31", name: "برك لانشون", nameEn: "Lunchon Borek", price: 25, isAvailable: true },
+      { id: "a32", name: "مكرونه بالبشاميل", nameEn: "Béchamel Pasta", price: 100, isAvailable: true },
+      { id: "a33", name: "مكرونه فوت تشيني", nameEn: "Fettuccine", price: 120, isAvailable: true }
+    ]
+  },
+
+  // ====== 7. مشروبات وحلويات ======
+  {
+    id: "drinks",
+    name: "مشروبات وحلويات",
+    nameEn: "Drinks & Desserts",
+    icon: "🧃",
+    image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&h=400&fit=crop",
+    products: [
+      { id: "d1", name: "اسبريسو سنجل", nameEn: "Espresso Single", price: 50, isAvailable: true },
+      { id: "d2", name: "اسبريسو دبل", nameEn: "Espresso Double", price: 70, isAvailable: true },
+      { id: "d3", name: "قهوة تركي سنجل", nameEn: "Turkish Coffee S", price: 40, isAvailable: true },
+      { id: "d4", name: "قهوة تركي دبل", nameEn: "Turkish Coffee D", price: 55, isAvailable: true },
+      { id: "d5", name: "قهوة فرنساوي سنجل", nameEn: "French Coffee S", price: 45, isAvailable: true },
+      { id: "d6", name: "قهوة فرنساوي دبل", nameEn: "French Coffee D", price: 60, isAvailable: true },
+      { id: "d7", name: "هوت شوكلت", nameEn: "Hot Chocolate", price: 60, isAvailable: true },
+      { id: "d8", name: "موكا", nameEn: "Mocha", price: 70, isAvailable: true },
+      { id: "d9", name: "كابتشينو", nameEn: "Cappuccino", price: 75, isAvailable: true },
+      { id: "d10", name: "هوت سيدر", nameEn: "Hot Cider", price: 50, isAvailable: true },
+      { id: "d11", name: "نيسكافيه بلاك", nameEn: "Nescafe Black", price: 40, isAvailable: true },
+      { id: "d12", name: "نيسكافيه وحليب", nameEn: "Nescafe Milk", price: 60, isAvailable: true },
+      { id: "d13", name: "برتقال", nameEn: "Orange Juice", price: 55, isAvailable: true },
+      { id: "d14", name: "ليمون", nameEn: "Lemon Juice", price: 50, isAvailable: true },
+      { id: "d15", name: "ليمون نعناع", nameEn: "Mint Lemon", price: 55, isAvailable: true },
+      { id: "d16", name: "مانجو", nameEn: "Mango Juice", price: 60, isAvailable: true },
+      { id: "d17", name: "فراولة", nameEn: "Strawberry", price: 60, isAvailable: true },
+      { id: "d18", name: "جوافة", nameEn: "Guava Juice", price: 55, isAvailable: true },
+      { id: "d19", name: "كيوي", nameEn: "Kiwi Juice", price: 75, isAvailable: true },
+      { id: "d20", name: "موز ولبن", nameEn: "Banana Milk", price: 75, isAvailable: true },
+      { id: "d21", name: "كوكتيل فواكه تروبيكال", nameEn: "Tropical Cocktail", price: 75, isAvailable: true },
+      { id: "d22", name: "كوكتيل وردة شامية", nameEn: "Warda Shamya Cocktail", price: 75, isAvailable: true },
+      { id: "d23", name: "سبيشيال كوكتيل", nameEn: "Special Cocktail", price: 80, isAvailable: true },
+      { id: "d24", name: "نوتيلا مع كرافت", nameEn: "Nutella Kraft", price: 60, isAvailable: true },
+      { id: "d25", name: "نوتيلا مع موز", nameEn: "Nutella Banana", price: 60, isAvailable: true },
+      { id: "d26", name: "كيري مع عسل", nameEn: "Kiri Honey", price: 60, isAvailable: true },
+      { id: "d27", name: "نوتيلا سادة", nameEn: "Nutella Plain", price: 50, isAvailable: true },
+      { id: "d28", name: "وافل نوتيلا", nameEn: "Nutella Waffle", price: 110, isAvailable: true },
+      { id: "d29", name: "وافل موز", nameEn: "Banana Waffle", price: 125, isAvailable: true },
+      { id: "d30", name: "وافل وردة الشامية", nameEn: "Warda Shamya Waffle", price: 150, isAvailable: true, isPopular: true },
+      { id: "d31", name: "مشروبات غازية", nameEn: "Soft Drinks", price: 25, isAvailable: true },
+      { id: "d32", name: "مياه معدنية", nameEn: "Mineral Water", price: 10, isAvailable: true },
+      { id: "d33", name: "لبن عيران - رايب", nameEn: "Ayran", price: 25, isAvailable: true }
+    ]
+  }
+];
