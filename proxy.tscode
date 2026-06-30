@@ -1,0 +1,24 @@
+import { NextResponse } from "next/server";
+
+export async function POST(req: Request) {
+  try {
+    const { password } = await req.json();
+
+    // كلمة المرور الافتراضية
+    const adminPassword = process.env.ADMIN_PASSWORD || "123456";
+
+    if (password === adminPassword) {
+      return NextResponse.json({ success: true });
+    } else {
+      return NextResponse.json(
+        { success: false, error: "كلمة المرور غير صحيحة" },
+        { status: 401 }
+      );
+    }
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: "حدث خطأ" },
+      { status: 500 }
+    );
+  }
+}

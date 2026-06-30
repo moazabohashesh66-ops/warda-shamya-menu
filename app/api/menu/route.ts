@@ -1,81 +1,61 @@
-import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+import { menuData } from "@/data/menuData";
+
+const filePath = path.join(process.cwd(), "data", "menu.json");
 
 export async function GET() {
   try {
-    const { data: categories, error: categoriesError } = await supabase
-      .from('categories')
-      .select('*')
-      .order('id');
+    // التأكد من وجود مجلد data
+    const dataDir = path.join(process.cwd(), "data");
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
 
-    if (categoriesError) throw categoriesError;
+    // التأكد من وجود الملف
+    if (!fs.existsSync(filePath)) {
+      return NextResponse.json(menuData);
+    }
 
-    const { data: products, error: productsError } = await supabase
-      .from('products')
-      .select('*')
-      .order('id');
-
-    if (productsError) throw productsError;
-
-    const menuData = categories.map((category: any) => ({
-      ...category,
-      products: products.filter((p: any) => p.category_id === category.id)
-    }));
-
-    return NextResponse.json(menuData);
+    const data = fs.readFileSync(filePath, "utf8");
+    const parsed = JSON.parse(data);
+    return NextResponse.json(parsed);
   } catch (error) {
-    console.error('Error in GET /api/menu:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    console.error("❌ خطأ في GET:", error);
+    return NextResponse.json(menuData);
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
   try {
-    const data = await request.json();
+    const body = await req.json();
 
-    // Delete existing data
-    await supabase.from('products').delete().neq('id', '');
-    await supabase.from('categories').delete().neq('id', '');
-
-    // Insert categories and products
-    for (const category of data) {
-      const { error: catError } = await supabase
-        .from('categories')
-        .insert({
-          id: category.id,
-          name: category.name,
-          name_en: category.nameEn,
-          icon: category.icon,
-          image: category.image || null
-        });
-
-      if (catError) throw catError;
-
-      for (const product of category.products) {
-        const { error: prodError } = await supabase
-          .from('products')
-          .insert({
-            id: product.id,
-            category_id: category.id,
-            name: product.name,
-            name_en: product.nameEn,
-            price: product.price,
-            description: product.description || null,
-            image: product.image || null,
-            is_available: product.isAvailable,
-            is_popular: product.isPopular || false,
-            is_new: product.isNew || false,
-            size: product.size || null,
-            weight: product.weight || null
-          });
-
-        if (prodError) throw prodError;
-      }
+    if (!Array.isArray(body)) {
+      return NextResponse.json(
+        { error: "البيانات غير صحيحة" },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ success: true });
+    // التأكد من وجود مجلد data
+    const dataDir = path.join(process.cwd(), "data");
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    // كتابة الملف
+    fs.writeFileSync(filePath, JSON.stringify(body, null, 2));
+
+    return NextResponse.json({
+      success: true,
+      message: "✅ تم حفظ البيانات بنجاح",
+    });
   } catch (error) {
-    console.error('Error in POST /api/menu:', error);
-    return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
+    console.error("❌ خطأ في POST:", error);
+    return NextResponse.json(
+      { error: "❌ حدث خطأ أثناء الحفظ" },
+      { status: 500 }
+    );
   }
 }

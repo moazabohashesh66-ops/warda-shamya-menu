@@ -47,20 +47,24 @@ export const menuData: Category[] = [
     icon: "🌯",
     image: "https://images.unsplash.com/photo-1559314809-0d155014e29e?w=800&h=400&fit=crop",
     products: [
+      // سندوتشات
       { id: "s1", name: "شاورما فراخ", nameEn: "Chicken Shawarma", price: 110, isAvailable: true, isPopular: true },
       { id: "s2", name: "شاورما فراخ دبل", nameEn: "Double Shawarma", price: 125, isAvailable: true },
       { id: "s3", name: "شاورما فراخ فرنساوي", nameEn: "French Shawarma", price: 125, isAvailable: true },
       { id: "s4", name: "شاورما فراخ كايزر", nameEn: "Kaiser Shawarma", price: 85, isAvailable: true },
       { id: "s5", name: "شاورما فراخ إكسترا", nameEn: "Extra Shawarma", price: 135, description: "موتزاريلا + مشروم", isAvailable: true },
       { id: "s6", name: "شاورما عيش شامي", nameEn: "Syrian Bread Shawarma", price: 110, isAvailable: true },
+      // وجبات
       { id: "s7", name: "شاورما فراخ عربي (شخص)", nameEn: "Arabic Shawarma (1 Person)", price: 190, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
       { id: "s8", name: "شاورما فراخ عربي (شخصين)", nameEn: "Arabic Shawarma (2 Persons)", price: 375, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
       { id: "s9", name: "شاورما فراخ عربي (3 أشخاص)", nameEn: "Arabic Shawarma (3 Persons)", price: 550, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
       { id: "s10", name: "شاورما فراخ عربي (عائلي)", nameEn: "Family Arabic Shawarma", price: 710, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
       { id: "s11", name: "شاورما فراخ عربي إكسترا", nameEn: "Extra Arabic Shawarma", price: 225, description: "موتزاريلا + مشروم + بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
       { id: "s12", name: "وجبة ماريا", nameEn: "Maria Meal", price: 225, description: "بطاطس + كول سلو + ثومية + مخلل", isAvailable: true },
+      // فتات
       { id: "s13", name: "فتة شاورما فراخ (كبير)", nameEn: "Large Shawarma Fatteh", price: 200, description: "مخلل + ثومية + بطاطس", isAvailable: true },
       { id: "s14", name: "فتة شاورما فراخ إكسترا", nameEn: "Extra Shawarma Fatteh", price: 225, description: "موتزاريلا + مشروم + مخلل + ثومية + بطاطس", isAvailable: true },
+      // أوزان
       { id: "s15", name: "كيلو شاورما فراخ", nameEn: "1kg Shawarma", price: 1000, description: "ثومية + مخلل + عيش + بطاطس", isAvailable: true },
       { id: "s16", name: "نصف كيلو شاورما فراخ", nameEn: "½kg Shawarma", price: 500, description: "ثومية + مخلل + عيش + بطاطس", isAvailable: true },
       { id: "s17", name: "ربع كيلو شاورما فراخ", nameEn: "¼kg Shawarma", price: 250, description: "ثومية + مخلل + عيش + بطاطس", isAvailable: true }
@@ -231,23 +235,27 @@ export const menuData: Category[] = [
       { id: "a12", name: "يالنجي", nameEn: "Yalanji", price: 60, isAvailable: true },
       { id: "a13", name: "طبق أرز", nameEn: "Rice Plate", price: 50, isAvailable: true },
       { id: "a14", name: "ثومية سبايسي", nameEn: "Spicy Garlic", price: 75, isAvailable: true },
+      // سلطات
       { id: "a15", name: "تبولة", nameEn: "Tabbouleh", price: 90, isAvailable: true },
       { id: "a16", name: "فتوش", nameEn: "Fattoush", price: 80, isAvailable: true },
       { id: "a17", name: "جرجير", nameEn: "Arugula", price: 75, isAvailable: true },
       { id: "a18", name: "سلطة خضراء", nameEn: "Green Salad", price: 75, isAvailable: true },
       { id: "a19", name: "كول سلو", nameEn: "Coleslaw", price: 75, isAvailable: true },
+      // شوربات
       { id: "a20", name: "شوربة عدس", nameEn: "Lentil Soup", price: 95, isAvailable: true },
       { id: "a21", name: "شوربة كريمة سادة", nameEn: "Cream Soup", price: 100, isAvailable: true },
       { id: "a22", name: "شوربة كريمة مشروم", nameEn: "Mushroom Cream", price: 120, isAvailable: true },
       { id: "a23", name: "شوربة كريمة فراخ", nameEn: "Chicken Cream", price: 140, isAvailable: true },
       { id: "a24", name: "شوربة الفريدو", nameEn: "Fettuccine Soup", price: 160, isAvailable: true },
       { id: "a25", name: "شوربة مكس", nameEn: "Mixed Soup", price: 140, isAvailable: true },
+      // برك
       { id: "a26", name: "برك جبنة", nameEn: "Cheese Borek", price: 25, isAvailable: true },
       { id: "a27", name: "برك سبانخ", nameEn: "Spinach Borek", price: 25, isAvailable: true },
       { id: "a28", name: "برك زيتون", nameEn: "Olive Borek", price: 25, isAvailable: true },
       { id: "a29", name: "برك سجق", nameEn: "Sausage Borek", price: 25, isAvailable: true },
       { id: "a30", name: "برك كيري", nameEn: "Kiri Borek", price: 25, isAvailable: true },
       { id: "a31", name: "برك لانشون", nameEn: "Lunchon Borek", price: 25, isAvailable: true },
+      // مكرونة
       { id: "a32", name: "مكرونه بالبشاميل", nameEn: "Béchamel Pasta", price: 100, isAvailable: true },
       { id: "a33", name: "مكرونه فوت تشيني", nameEn: "Fettuccine", price: 120, isAvailable: true }
     ]

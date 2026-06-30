@@ -6,17 +6,11 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'images.unsplash.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'plus.unsplash.com',
-        port: '',
-        pathname: '/**',
       },
     ],
   },
+  // تجاهل ملف proxy/middleware لو مش موجود
+  skipProxyUrlNormalize: true,
 };
 
 export default nextConfig;

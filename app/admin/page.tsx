@@ -1,516 +1,796 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import Image from "next/image";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Upload,
+  X,
+  Search,
+  Plus,
+  Trash2,
+  Save,
+  RefreshCw,
+  Star,
+  Clock,
+  Copy,
+} from "lucide-react";
 
-interface Product {
+// ===================== Types =====================
+type Product = {
   id: string;
   name: string;
-  nameEn: string;
+  name_en?: string;
   description?: string;
-  price: number;
   image?: string;
-  isAvailable: boolean;
-  isPopular?: boolean;
-  isNew?: boolean;
+  price: number;
   size?: string;
   weight?: string;
-}
+  is_popular?: boolean;
+  is_new?: boolean;
+  is_available?: boolean;
+};
 
-interface Category {
+type Category = {
   id: string;
   name: string;
-  nameEn: string;
-  icon: string;
+  name_en?: string;
+  icon?: string;
   image?: string;
   products: Product[];
-}
+  isExpanded?: boolean;
+};
 
+type Toast = {
+  id: string;
+  message: string;
+  type: "success" | "error" | "info";
+};
+
+// ===================== Component =====================
 export default function AdminPage() {
-  const [menuData, setMenuData] = useState<Category[]>([]);
+  // ===== State =====
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState("");
-  const [showAddProduct, setShowAddProduct] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState<{ categoryId: string; productId: string; productName: string } | null>(null);
-  const [newProduct, setNewProduct] = useState<Partial<Product>>({
-    name: "",
-    nameEn: "",
-    price: 0,
-    description: "",
-    isAvailable: true
-  });
+  const [saving, setSaving] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [toasts, setToasts] = useState<Toast[]>([]);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [pendingChanges, setPendingChanges] = useState(false);
+  const [expandedAll, setExpandedAll] = useState(false);
 
-  // تحميل البيانات
-  useEffect(() => {
-    fetchMenuData();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileContextRef = useRef<{ cIndex: number; pIndex?: number } | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // ===== Toast System =====
+  const showToast = useCallback((message: string, type: Toast["type"] = "info") => {
+    const id = Date.now().toString();
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 3500);
   }, []);
 
-  const fetchMenuData = async () => {
+  // ===== API Calls =====
+  const loadMenu = useCallback(async () => {
     try {
-      setLoading(true);
       const res = await fetch("/api/menu");
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setMenuData(data);
-      } else {
-        setMenuData([]);
-      }
-      setLoading(false);
+      setCategories((data || []).map((c: Category) => ({ ...c, isExpanded: false })));
     } catch (error) {
-      console.error("خطأ في تحميل البيانات", error);
-      setMenuData([]);
+      console.error(error);
+      showToast("❌ فشل تحميل البيانات", "error");
+    } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  // حفظ التغييرات
-  const saveChanges = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch("/api/menu", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(menuData)
+  const saveMenu = useCallback(
+    async (data: Category[], silent = false) => {
+      setSaving(true);
+      try {
+        const res = await fetch("/api/menu", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await res.json();
+        if (result.success) {
+          if (!silent) showToast("✅ تم الحفظ بنجاح", "success");
+          setPendingChanges(false);
+          return true;
+        } else {
+          showToast("❌ فشل الحفظ", "error");
+          return false;
+        }
+      } catch {
+        showToast("❌ خطأ في الاتصال", "error");
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [showToast]
+  );
+
+  const autoSave = useCallback(
+    (data: Category[]) => {
+      setPendingChanges(true);
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+      saveTimeoutRef.current = setTimeout(() => {
+        saveMenu(data, true);
+      }, 1500);
+    },
+    [saveMenu]
+  );
+
+  // ===== UPDATE FUNCTIONS (Real-Time) =====
+  const updateCategory = useCallback(
+    (index: number, key: keyof Category, value: any) => {
+      setCategories((prev) => {
+        const copy = [...prev];
+        copy[index] = { ...copy[index], [key]: value };
+        autoSave(copy);
+        return copy;
       });
-      const result = await res.json();
-      if (result.success) {
-        setMessage("✅ تم حفظ التغييرات بنجاح!");
-        await fetchMenuData();
-      } else {
-        setMessage("❌ حدث خطأ في الحفظ");
-      }
-      setTimeout(() => setMessage(""), 3000);
-      setLoading(false);
-    } catch (error) {
-      setMessage("❌ حدث خطأ في الحفظ");
-      setTimeout(() => setMessage(""), 3000);
-      setLoading(false);
+    },
+    [autoSave]
+  );
+
+  const updateProduct = useCallback(
+    (cIndex: number, pIndex: number, key: keyof Product, value: any) => {
+      setCategories((prev) => {
+        const copy = [...prev];
+        const updatedProducts = [...copy[cIndex].products];
+        updatedProducts[pIndex] = { ...updatedProducts[pIndex], [key]: value };
+        copy[cIndex] = { ...copy[cIndex], products: updatedProducts };
+        autoSave(copy);
+        return copy;
+      });
+    },
+    [autoSave]
+  );
+
+  // ===== CRUD - Categories =====
+  const addCategory = useCallback(() => {
+    const newCategory: Category = {
+      id: `cat_${Date.now()}`,
+      name: "قسم جديد",
+      icon: "📦",
+      products: [],
+      isExpanded: true,
+    };
+    setCategories((prev) => {
+      const copy = [...prev, newCategory];
+      autoSave(copy);
+      return copy;
+    });
+    showToast("➕ تم إضافة قسم جديد", "info");
+  }, [autoSave, showToast]);
+
+  const deleteCategory = useCallback(
+    (index: number) => {
+      if (!confirm("هل أنت متأكد من حذف هذا القسم وجميع منتجاته؟")) return;
+      setCategories((prev) => {
+        const copy = [...prev];
+        copy.splice(index, 1);
+        autoSave(copy);
+        return copy;
+      });
+      showToast("🗑️ تم حذف القسم", "info");
+    },
+    [autoSave, showToast]
+  );
+
+  // ===== CRUD - Products =====
+  const addProduct = useCallback(
+    (cIndex: number) => {
+      setCategories((prev) => {
+        const copy = [...prev];
+        copy[cIndex].products.push({
+          id: `prod_${Date.now()}`,
+          name: "منتج جديد",
+          price: 0,
+          description: "",
+          image: "",
+          is_available: true,
+          is_popular: false,
+          is_new: false,
+        });
+        autoSave(copy);
+        return copy;
+      });
+      showToast("➕ تم إضافة منتج جديد", "info");
+    },
+    [autoSave, showToast]
+  );
+
+  const deleteProduct = useCallback(
+    (cIndex: number, pIndex: number) => {
+      if (!confirm("هل أنت متأكد من حذف هذا المنتج؟")) return;
+      setCategories((prev) => {
+        const copy = [...prev];
+        copy[cIndex].products.splice(pIndex, 1);
+        autoSave(copy);
+        return copy;
+      });
+      showToast("🗑️ تم حذف المنتج", "info");
+    },
+    [autoSave, showToast]
+  );
+
+  const duplicateProduct = useCallback(
+    (cIndex: number, pIndex: number) => {
+      setCategories((prev) => {
+        const copy = [...prev];
+        const original = copy[cIndex].products[pIndex];
+        copy[cIndex].products.push({
+          ...original,
+          id: `prod_${Date.now()}`,
+          name: `${original.name} (نسخة)`,
+        });
+        autoSave(copy);
+        return copy;
+      });
+      showToast("📋 تم نسخ المنتج", "info");
+    },
+    [autoSave, showToast]
+  );
+
+  // ===== Toggle Category =====
+  const toggleCategory = useCallback((categoryId: string) => {
+    setCategories((prev) =>
+      prev.map((c) =>
+        c.id === categoryId ? { ...c, isExpanded: !c.isExpanded } : c
+      )
+    );
+  }, []);
+
+  const toggleAllCategories = useCallback(() => {
+    setExpandedAll((prev) => !prev);
+    setCategories((prev) =>
+      prev.map((c) => ({ ...c, isExpanded: !expandedAll }))
+    );
+  }, [expandedAll]);
+
+  // ===== IMAGE UPLOAD =====
+  const triggerFileUpload = useCallback((cIndex: number, pIndex?: number) => {
+    fileContextRef.current = { cIndex, pIndex };
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
     }
-  };
+  }, []);
 
-  // تعديل اسم المنتج
-  const updateProductName = (categoryId: string, productId: string, newName: string) => {
-    const newMenu = menuData.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          products: cat.products.map(p => {
-            if (p.id === productId) {
-              return { ...p, name: newName };
-            }
-            return p;
-          })
-        };
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file || !fileContextRef.current) return;
+
+      const { cIndex, pIndex } = fileContextRef.current;
+
+      if (!file.type.startsWith("image/")) {
+        showToast("❌ يرجى اختيار ملف صورة فقط", "error");
+        e.target.value = "";
+        fileContextRef.current = null;
+        return;
       }
-      return cat;
-    });
-    setMenuData(newMenu);
-  };
 
-  // تغيير سعر المنتج
-  const updateProductPrice = (categoryId: string, productId: string, newPrice: number) => {
-    if (newPrice < 0) return;
-    const newMenu = menuData.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          products: cat.products.map(p => {
-            if (p.id === productId) {
-              return { ...p, price: newPrice };
-            }
-            return p;
-          })
-        };
+      if (file.size > 5 * 1024 * 1024) {
+        showToast("❌ حجم الصورة كبير جداً (الحد الأقصى 5 ميجابايت)", "error");
+        e.target.value = "";
+        fileContextRef.current = null;
+        return;
       }
-      return cat;
-    });
-    setMenuData(newMenu);
-  };
 
-  // تغيير توفر المنتج
-  const toggleProductAvailability = (categoryId: string, productId: string) => {
-    const newMenu = menuData.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          products: cat.products.map(p => {
-            if (p.id === productId) {
-              return { ...p, isAvailable: !p.isAvailable };
-            }
-            return p;
-          })
-        };
+      const formData = new FormData();
+      formData.append("file", file);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const data = await res.json();
+        if (data.url) {
+          if (pIndex !== undefined) {
+            updateProduct(cIndex, pIndex, "image", data.url);
+          } else {
+            updateCategory(cIndex, "image", data.url);
+          }
+          showToast("✅ تم رفع الصورة", "success");
+        } else {
+          showToast("❌ فشل رفع الصورة", "error");
+        }
+      } catch {
+        showToast("❌ خطأ في رفع الصورة", "error");
       }
-      return cat;
-    });
-    setMenuData(newMenu);
-  };
+      e.target.value = "";
+      fileContextRef.current = null;
+    },
+    [updateCategory, updateProduct, showToast]
+  );
 
-  // حذف منتج
-  const confirmDelete = (categoryId: string, productId: string, productName: string) => {
-    setDeleteConfirm({ categoryId, productId, productName });
-  };
+  // ===== Search =====
+  const filteredCategories = useMemo(() => {
+    if (!searchTerm.trim()) return categories;
+    const term = searchTerm.toLowerCase().trim();
+    return categories
+      .map((cat) => ({
+        ...cat,
+        products: cat.products.filter(
+          (p) =>
+            p.name.toLowerCase().includes(term) ||
+            p.description?.toLowerCase().includes(term)
+        ),
+      }))
+      .filter((cat) => cat.products.length > 0 || cat.name.toLowerCase().includes(term));
+  }, [categories, searchTerm]);
 
-  const executeDelete = () => {
-    if (!deleteConfirm) return;
-    const { categoryId, productId } = deleteConfirm;
-    const newMenu = menuData.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          products: cat.products.filter(p => p.id !== productId)
-        };
-      }
-      return cat;
-    });
-    setMenuData(newMenu);
-    setDeleteConfirm(null);
-    setMessage("🗑️ تم حذف المنتج");
-    setTimeout(() => setMessage(""), 2000);
-  };
+  // ===== Stats =====
+  const totalProducts = useMemo(
+    () => categories.reduce((acc, cat) => acc + cat.products.length, 0),
+    [categories]
+  );
 
-  // إضافة منتج جديد
-  const addProduct = (categoryId: string) => {
-    if (!newProduct.name || !newProduct.price) {
-      setMessage("⚠️ أدخل اسم وسعر المنتج");
-      setTimeout(() => setMessage(""), 2000);
+  // ===== Initial Load + Auth Check =====
+  useEffect(() => {
+    // التحقق من التوكن
+    const admin = localStorage.getItem("admin");
+    if (admin !== "ok") {
+      window.location.href = "/admin/login";
       return;
     }
+    loadMenu();
+  }, [loadMenu]);
 
-    const product: Product = {
-      id: `p${Date.now()}`,
-      name: newProduct.name,
-      nameEn: newProduct.nameEn || newProduct.name,
-      price: newProduct.price,
-      description: newProduct.description || "",
-      isAvailable: newProduct.isAvailable !== undefined ? newProduct.isAvailable : true,
-      image: newProduct.image || ""
+  // ===== Cleanup =====
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
+  }, []);
 
-    const newMenu = menuData.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          products: [...cat.products, product]
-        };
-      }
-      return cat;
-    });
-    setMenuData(newMenu);
-    setNewProduct({ name: "", nameEn: "", price: 0, description: "", isAvailable: true });
-    setShowAddProduct(false);
-    setMessage("✅ تم إضافة المنتج بنجاح!");
-    setTimeout(() => setMessage(""), 3000);
-  };
-
-  // رفع صورة المنتج
-  const handleProductImageUpload = (categoryId: string, productId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      
-      const newMenu = menuData.map(cat => {
-        if (cat.id === categoryId) {
-          return {
-            ...cat,
-            products: cat.products.map(p => {
-              if (p.id === productId) {
-                return { ...p, image: base64 };
-              }
-              return p;
-            })
-          };
-        }
-        return cat;
-      });
-      setMenuData(newMenu);
-      setMessage("✅ تم تحديث صورة المنتج!");
-      setTimeout(() => setMessage(""), 2000);
-    };
-  };
-
-  // رفع صورة القسم
-  const handleCategoryImageUpload = (categoryId: string, event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      
-      const newMenu = menuData.map(cat => {
-        if (cat.id === categoryId) {
-          return { ...cat, image: base64 };
-        }
-        return cat;
-      });
-      setMenuData(newMenu);
-      setMessage("✅ تم تحديث صورة القسم!");
-      setTimeout(() => setMessage(""), 2000);
-    };
-  };
-
+  // ===== Loading =====
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#1a0e0a]">
-        <div className="text-white/60 text-xl">⏳ جاري التحميل...</div>
+      <div className="min-h-screen flex items-center justify-center bg-[#120806]">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-10 h-10 text-yellow-400 animate-spin" />
+          <p className="text-white/60 text-lg">⏳ جاري تحميل لوحة التحكم...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a0e0a] to-[#2E1A12] py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-yellow-400 mb-2 text-center">
-          🛠️ لوحة تحكم المنيو
-        </h1>
-        <p className="text-center text-white/40 mb-8">إدارة الأقسام والمنتجات والأسعار والصور</p>
-
-        {message && (
-          <div className={`p-4 rounded-lg mb-6 text-center font-semibold ${
-            message.includes('✅') ? 'bg-green-100 text-green-700 border border-green-300' : 
-            message.includes('❌') ? 'bg-red-100 text-red-700 border border-red-300' : 
-            'bg-yellow-100 text-yellow-700 border border-yellow-300'
-          }`}>
-            {message}
-          </div>
-        )}
-
-        {/* الأقسام */}
-        {menuData.map((category) => (
-          <div key={category.id} className="bg-white/5 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-8 border border-white/10">
-            <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
-              <div className="flex items-center gap-3">
-                <h2 className="text-2xl font-bold text-white">
-                  <span className="text-3xl mr-2">{category.icon}</span>
-                  {category.name}
-                  <span className="text-sm font-normal text-white/40 ml-2">({category.products.length} منتج)</span>
-                </h2>
-                <button
-                  onClick={() => {
-                    const input = document.getElementById(`category-image-${category.id}`) as HTMLInputElement;
-                    if (input) input.click();
-                  }}
-                  className="bg-blue-500/80 text-white px-3 py-1 rounded-full text-sm hover:bg-blue-600 transition font-semibold"
-                >
-                  📸 تغيير صورة القسم
-                </button>
-                <input
-                  id={`category-image-${category.id}`}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => handleCategoryImageUpload(category.id, e)}
-                />
-              </div>
-              <button
-                onClick={() => {
-                  setShowAddProduct(true);
-                }}
-                className="bg-green-600 text-white px-4 py-2 rounded-full text-sm hover:bg-green-700 transition font-semibold"
-              >
-                ➕ إضافة منتج
-              </button>
-            </div>
-
-            {/* منتجات القسم */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {category.products.map((product) => (
-                <div key={product.id} className={`border-2 rounded-xl p-4 hover:shadow-lg transition ${!product.isAvailable ? 'bg-white/5 border-white/10' : 'bg-white/10 border-white/20'}`}>
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <input
-                        type="text"
-                        value={product.name}
-                        onChange={(e) => updateProductName(category.id, product.id, e.target.value)}
-                        className="w-full bg-transparent border-2 border-white/20 rounded-lg px-2 py-1 text-sm font-semibold text-white focus:border-yellow-500 focus:outline-none mb-1"
-                      />
-                    </div>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => {
-                          const input = document.getElementById(`product-image-${category.id}-${product.id}`) as HTMLInputElement;
-                          if (input) input.click();
-                        }}
-                        className="text-xs px-2 py-1 rounded-full bg-blue-500/50 text-white hover:bg-blue-600 font-semibold"
-                      >
-                        📸
-                      </button>
-                      <input
-                        id={`product-image-${category.id}-${product.id}`}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleProductImageUpload(category.id, product.id, e)}
-                      />
-                      <button
-                        onClick={() => confirmDelete(category.id, product.id, product.name)}
-                        className="text-xs px-2 py-1 rounded-full bg-red-500/50 text-white hover:bg-red-600 font-semibold"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {product.image && (
-                    <div className="relative w-full h-24 mt-2 rounded-lg overflow-hidden bg-gray-800 border border-white/10">
-                      <Image 
-                        src={product.image} 
-                        alt={product.name} 
-                        fill 
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  
-                  <div className="flex items-center gap-3 mt-2 flex-wrap">
-                    <input
-                      type="number"
-                      value={product.price}
-                      onChange={(e) => updateProductPrice(category.id, product.id, Number(e.target.value))}
-                      className="w-24 bg-transparent border-2 border-white/20 rounded-lg px-2 py-1 text-sm font-semibold text-white focus:border-yellow-500 focus:outline-none"
-                      min="0"
-                    />
-                    <span className="text-sm font-bold text-white/60">ج.م</span>
-                    <button
-                      onClick={() => toggleProductAvailability(category.id, product.id)}
-                      className={`text-xs px-3 py-1 rounded-full font-semibold ${
-                        product.isAvailable ? 'bg-green-500/50 text-white border border-green-400' : 'bg-red-500/50 text-white border border-red-400'
-                      }`}
-                    >
-                      {product.isAvailable ? '✅ متوفر' : '❌ غير متوفر'}
-                    </button>
-                    <button
-                      onClick={saveChanges}
-                      className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 transition"
-                    >
-                      حفظ
-                    </button>
-                  </div>
-                  
-                  {product.description && (
-                    <p className="text-xs text-white/40 mt-1 line-clamp-1">{product.description}</p>
-                  )}
-                  {product.size && <span className="text-xs text-blue-400 font-semibold">📏 {product.size}</span>}
-                  {product.weight && <span className="text-xs text-blue-400 font-semibold ml-2">⚖️ {product.weight}</span>}
-                </div>
-              ))}
-            </div>
-
-            {/* نموذج إضافة منتج */}
-            {showAddProduct && (
-              <div className="mt-4 border-t border-white/10 pt-4">
-                <h4 className="font-bold text-white text-lg mb-3">➕ إضافة منتج جديد</h4>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <input
-                    type="text"
-                    placeholder="الاسم (عربي)"
-                    value={newProduct.name}
-                    onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
-                    className="bg-white/10 border-2 border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/30 focus:border-yellow-500 focus:outline-none"
-                  />
-                  <input
-                    type="text"
-                    placeholder="الاسم (إنجليزي)"
-                    value={newProduct.nameEn}
-                    onChange={(e) => setNewProduct({ ...newProduct, nameEn: e.target.value })}
-                    className="bg-white/10 border-2 border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/30 focus:border-yellow-500 focus:outline-none"
-                  />
-                  <input
-                    type="number"
-                    placeholder="السعر"
-                    value={newProduct.price || ""}
-                    onChange={(e) => setNewProduct({ ...newProduct, price: Number(e.target.value) })}
-                    className="bg-white/10 border-2 border-white/20 rounded-lg px-3 py-2 text-white placeholder:text-white/30 focus:border-yellow-500 focus:outline-none"
-                    min="0"
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => {
-                        const categoryId = category.id;
-                        addProduct(categoryId);
-                      }}
-                      className="bg-yellow-500 text-black px-4 py-2 rounded-full text-sm hover:bg-yellow-400 transition font-bold flex-1"
-                    >
-                      إضافة
-                    </button>
-                    <button
-                      onClick={() => setShowAddProduct(false)}
-                      className="bg-white/20 text-white px-4 py-2 rounded-full text-sm hover:bg-white/30 transition font-semibold"
-                    >
-                      إلغاء
-                    </button>
-                  </div>
-                </div>
-                <input
-                  type="text"
-                  placeholder="الوصف (اختياري)"
-                  value={newProduct.description || ""}
-                  onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                  className="bg-white/10 border-2 border-white/20 rounded-lg px-3 py-2 mt-2 w-full text-white placeholder:text-white/30 focus:border-yellow-500 focus:outline-none"
-                />
-              </div>
-            )}
+    <div className="min-h-screen bg-gradient-to-br from-[#120806] via-[#1a0e0a] to-[#2d1408] p-4 md:p-8 text-white">
+      {/* ===== Toasts ===== */}
+      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+        {toasts.map((toast) => (
+          <div
+            key={toast.id}
+            className={`px-5 py-3 rounded-xl shadow-2xl pointer-events-auto animate-in slide-in-from-top-2 duration-300 font-medium ${
+              toast.type === "success"
+                ? "bg-green-500/90 text-white"
+                : toast.type === "error"
+                ? "bg-red-500/90 text-white"
+                : "bg-yellow-500/90 text-black"
+            }`}
+          >
+            {toast.message}
           </div>
         ))}
+      </div>
 
-        {/* نافذة تأكيد الحذف */}
-        {deleteConfirm && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-            <div className="bg-[#1a0e0a] rounded-2xl max-w-md w-full p-6 shadow-2xl border-2 border-red-500/30">
-              <div className="text-center">
-                <div className="text-6xl mb-4">⚠️</div>
-                <h3 className="text-2xl font-bold text-red-500 mb-3">تأكيد الحذف</h3>
-                <p className="text-white/60 mb-2">
-                  هل أنت متأكد من حذف المنتج؟
-                </p>
-                <p className="text-xl font-bold text-white mb-4">"{deleteConfirm.productName}"</p>
-                <p className="text-sm text-red-400 font-semibold mb-6">❗ هذا الإجراء لا يمكن التراجع عنه</p>
-                <div className="flex gap-3">
-                  <button
-                    onClick={executeDelete}
-                    className="flex-1 bg-red-600 text-white px-6 py-3 rounded-full font-bold hover:bg-red-700 transition text-lg"
-                  >
-                    نعم، احذف
-                  </button>
-                  <button
-                    onClick={() => setDeleteConfirm(null)}
-                    className="flex-1 bg-white/10 text-white px-6 py-3 rounded-full font-bold hover:bg-white/20 transition text-lg"
-                  >
-                    إلغاء
-                  </button>
-                </div>
-              </div>
-            </div>
+      {/* ===== Image Preview ===== */}
+      {selectedImage && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
+          onClick={() => setSelectedImage(null)}
+        >
+          <div className="relative max-w-4xl max-h-[90vh] bg-[#1a0e0a] rounded-2xl p-2 border border-white/10">
+            <button
+              onClick={() => setSelectedImage(null)}
+              className="absolute -top-3 -right-3 bg-red-500 rounded-full p-2 hover:bg-red-600 transition shadow-xl"
+            >
+              <X size={18} />
+            </button>
+            <img
+              src={selectedImage}
+              alt="Preview"
+              className="max-w-full max-h-[85vh] rounded-xl object-contain"
+            />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* أزرار الحفظ */}
-        <div className="text-center mt-8 flex gap-4 justify-center flex-wrap">
+      {/* ===== Hidden File Input ===== */}
+      <input
+        type="file"
+        ref={fileInputRef}
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
+      {/* ===== Header ===== */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-yellow-400 flex items-center gap-3">
+            🛠️ لوحة التحكم
+            <span className="text-sm font-normal text-white/30 bg-white/5 px-3 py-1 rounded-full">
+              {totalProducts} منتج • {categories.length} أقسام
+            </span>
+          </h1>
+          {pendingChanges && (
+            <p className="text-yellow-400/60 text-sm mt-1 flex items-center gap-1">
+              <Clock size={14} /> توجد تغييرات غير محفوظة...
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-3">
           <button
-            onClick={saveChanges}
-            className="bg-yellow-500 text-black px-10 py-4 rounded-full font-bold text-lg hover:bg-yellow-400 transition shadow-lg hover:shadow-yellow-500/30"
+            onClick={toggleAllCategories}
+            className="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm transition"
           >
-            💾 حفظ التغييرات
+            {expandedAll ? "📂 طي الكل" : "📂 فتح الكل"}
           </button>
           <button
-            onClick={() => {
-              if (confirm("⚠️ هل أنت متأكد من إعادة ضبط كل البيانات؟")) {
-                localStorage.clear();
-                window.location.reload();
-              }
-            }}
-            className="bg-red-500 text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-red-400 transition shadow-lg hover:shadow-red-500/30"
+            onClick={addCategory}
+            className="bg-green-500 hover:bg-green-400 text-black px-5 py-2 rounded-xl font-bold transition hover:scale-105"
           >
-            🔄 إعادة ضبط
+            <Plus size={18} className="inline mr-1" /> قسم
+          </button>
+          <button
+            onClick={() => saveMenu(categories, false)}
+            disabled={saving}
+            className="bg-yellow-500 hover:bg-yellow-400 text-black px-6 py-2 rounded-xl font-bold transition hover:scale-105 disabled:opacity-50"
+          >
+            {saving ? (
+              <RefreshCw size={18} className="animate-spin inline" />
+            ) : (
+              <Save size={18} className="inline mr-1" />
+            )}
+            حفظ
           </button>
         </div>
       </div>
+
+      {/* ===== Search ===== */}
+      <div className="relative mb-6">
+        <Search size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30" />
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="🔍 ابحث عن منتج أو قسم..."
+          className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pr-12 pl-4 text-white placeholder:text-white/30 outline-none focus:border-yellow-400 transition"
+        />
+      </div>
+
+      {/* ===== Categories ===== */}
+      {filteredCategories.length === 0 ? (
+        <div className="text-center py-20 text-white/30">
+          <p className="text-2xl">📭 لا توجد نتائج</p>
+          <p className="text-sm mt-2">جرب تغيير كلمة البحث</p>
+        </div>
+      ) : (
+        filteredCategories.map((category, cIndex) => {
+          const isExpanded = category.isExpanded ?? false;
+          const productCount = category.products?.length || 0;
+          const actualIndex = categories.findIndex((c) => c.id === category.id);
+
+          return (
+            <div
+              key={category.id}
+              className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 mb-4 overflow-hidden transition-all"
+            >
+              {/* ===== Category Header (IMAGE + NAME visible outside) ===== */}
+              <div
+                className="flex flex-wrap items-center gap-3 p-4 cursor-pointer hover:bg-white/5 transition"
+                onClick={() => toggleCategory(category.id)}
+              >
+                <div className="flex-1 min-w-0 flex items-center gap-3">
+                  <input
+                    value={category.icon || "📦"}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      updateCategory(actualIndex, "icon", e.target.value);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-12 bg-transparent border-b border-white/20 hover:border-yellow-400 focus:border-yellow-400 outline-none text-3xl text-center transition"
+                    placeholder="📦"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <input
+                      value={category.name}
+                      onChange={(e) => {
+                        e.stopPropagation();
+                        updateCategory(actualIndex, "name", e.target.value);
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                      className="w-full bg-transparent border-b border-white/20 hover:border-yellow-400 focus:border-yellow-400 outline-none text-lg font-bold text-white transition px-1"
+                      placeholder="اسم القسم"
+                    />
+                    <span className="text-white/30 text-sm">
+                      {productCount} منتج
+                      {category.name_en && ` • ${category.name_en}`}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* ✅ Category Image Visible Outside (REAL-TIME) */}
+                  {category.image && (
+                    <div
+                      className="w-10 h-10 rounded-xl overflow-hidden border border-white/20 cursor-pointer hover:border-yellow-400 transition flex-shrink-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedImage(category.image!);
+                      }}
+                    >
+                      <img
+                        src={category.image}
+                        alt={category.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      triggerFileUpload(actualIndex);
+                    }}
+                    className="bg-blue-500/30 hover:bg-blue-500/50 text-white/80 p-2 rounded-xl transition"
+                    title="رفع صورة القسم"
+                  >
+                    <Upload size={16} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      addProduct(actualIndex);
+                    }}
+                    className="bg-green-500/30 hover:bg-green-500/50 text-white p-2 rounded-xl transition"
+                    title="إضافة منتج"
+                  >
+                    <Plus size={16} />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteCategory(actualIndex);
+                    }}
+                    className="bg-red-500/30 hover:bg-red-500/50 text-white/60 p-2 rounded-xl transition"
+                    title="حذف القسم"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                  <button className="text-white/40 hover:text-yellow-400 transition p-1">
+                    {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                  </button>
+                </div>
+              </div>
+
+              {/* ===== Category Content (Expanded) ===== */}
+              {isExpanded && (
+                <div className="p-4 pt-2 border-t border-white/5">
+                  <div className="mb-4">
+                    <label className="text-xs text-white/30 block mb-1">رابط صورة القسم</label>
+                    <input
+                      value={category.image || ""}
+                      onChange={(e) => updateCategory(actualIndex, "image", e.target.value)}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl p-2 text-sm text-white/80 outline-none focus:border-yellow-400 transition"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    {category.image && (
+                      <div className="mt-2 flex items-center gap-3">
+                        <div className="w-16 h-16 rounded-xl overflow-hidden border border-white/20">
+                          <img
+                            src={category.image}
+                            alt={category.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <button
+                          onClick={() => setSelectedImage(category.image!)}
+                          className="text-xs text-blue-400 hover:text-blue-300 transition"
+                        >
+                          👁️ معاينة
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ===== Products ===== */}
+                  <div className="space-y-3">
+                    {category.products.length === 0 ? (
+                      <div className="text-center text-white/20 py-6 text-sm">
+                        لا توجد منتجات في هذا القسم
+                      </div>
+                    ) : (
+                      category.products.map((product, pIndex) => {
+                        const actualPIndex = categories[actualIndex]?.products?.findIndex(
+                          (p) => p.id === product.id
+                        );
+
+                        return (
+                          <div
+                            key={product.id}
+                            className="bg-black/30 rounded-xl p-4 border border-white/5 hover:border-white/15 transition group"
+                          >
+                            <div className="flex flex-wrap items-start gap-3">
+                              <div className="flex-1 min-w-[120px]">
+                                <label className="text-[10px] text-white/30 block mb-0.5">اسم المنتج</label>
+                                <input
+                                  value={product.name}
+                                  onChange={(e) =>
+                                    updateProduct(actualIndex, actualPIndex!, "name", e.target.value)
+                                  }
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white outline-none focus:border-yellow-400 transition"
+                                  placeholder="اسم المنتج"
+                                />
+                              </div>
+                              <div className="w-28">
+                                <label className="text-[10px] text-white/30 block mb-0.5">السعر</label>
+                                <input
+                                  type="number"
+                                  value={product.price}
+                                  onChange={(e) =>
+                                    updateProduct(
+                                      actualIndex,
+                                      actualPIndex!,
+                                      "price",
+                                      Number(e.target.value)
+                                    )
+                                  }
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white outline-none focus:border-yellow-400 transition"
+                                  placeholder="0"
+                                />
+                              </div>
+                              <div className="flex items-center gap-1 pt-4">
+                                <button
+                                  onClick={() => duplicateProduct(actualIndex, actualPIndex!)}
+                                  className="bg-blue-500/30 hover:bg-blue-500/50 text-white/60 p-2 rounded-lg transition"
+                                  title="نسخ المنتج"
+                                >
+                                  <Copy size={14} />
+                                </button>
+                                <button
+                                  onClick={() => deleteProduct(actualIndex, actualPIndex!)}
+                                  className="bg-red-500/30 hover:bg-red-500/50 text-white/60 p-2 rounded-lg transition"
+                                  title="حذف المنتج"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-2">
+                              <div className="sm:col-span-2 lg:col-span-1">
+                                <label className="text-[10px] text-white/30 block mb-0.5">الوصف</label>
+                                <input
+                                  value={product.description || ""}
+                                  onChange={(e) =>
+                                    updateProduct(
+                                      actualIndex,
+                                      actualPIndex!,
+                                      "description",
+                                      e.target.value)
+                                  }
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white outline-none focus:border-yellow-400 transition"
+                                  placeholder="وصف المنتج"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-white/30 block mb-0.5">الحجم</label>
+                                <input
+                                  value={product.size || ""}
+                                  onChange={(e) =>
+                                    updateProduct(actualIndex, actualPIndex!, "size", e.target.value)
+                                  }
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white outline-none focus:border-yellow-400 transition"
+                                  placeholder="وسط، كبير..."
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-white/30 block mb-0.5">الوزن</label>
+                                <input
+                                  value={product.weight || ""}
+                                  onChange={(e) =>
+                                    updateProduct(actualIndex, actualPIndex!, "weight", e.target.value)
+                                  }
+                                  className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white outline-none focus:border-yellow-400 transition"
+                                  placeholder="كيلو، نصف كيلو..."
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[10px] text-white/30 block mb-0.5">صورة المنتج</label>
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => triggerFileUpload(actualIndex, actualPIndex)}
+                                    className="bg-blue-500/30 hover:bg-blue-500/50 text-white/80 p-2 rounded-lg transition flex-1 text-xs flex items-center justify-center gap-1"
+                                  >
+                                    <Upload size={12} /> رفع
+                                  </button>
+                                  {product.image && (
+                                    <div
+                                      className="w-8 h-8 rounded-lg overflow-hidden border border-white/20 cursor-pointer hover:border-yellow-400 transition flex-shrink-0"
+                                      onClick={() => setSelectedImage(product.image!)}
+                                    >
+                                      <img
+                                        src={product.image}
+                                        alt={product.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-4 mt-2 pt-2 border-t border-white/5">
+                              <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={product.is_available ?? true}
+                                  onChange={(e) =>
+                                    updateProduct(
+                                      actualIndex,
+                                      actualPIndex!,
+                                      "is_available",
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-yellow-400 focus:ring-yellow-400"
+                                />
+                                متوفر
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={product.is_popular ?? false}
+                                  onChange={(e) =>
+                                    updateProduct(
+                                      actualIndex,
+                                      actualPIndex!,
+                                      "is_popular",
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-yellow-400 focus:ring-yellow-400"
+                                />
+                                <Star size={12} className="text-yellow-400" /> الأكثر طلباً
+                              </label>
+                              <label className="flex items-center gap-2 text-xs text-white/50 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={product.is_new ?? false}
+                                  onChange={(e) =>
+                                    updateProduct(
+                                      actualIndex,
+                                      actualPIndex!,
+                                      "is_new",
+                                      e.target.checked
+                                    )
+                                  }
+                                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-yellow-400 focus:ring-yellow-400"
+                                />
+                                جديد
+                              </label>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })
+      )}
     </div>
   );
 }
