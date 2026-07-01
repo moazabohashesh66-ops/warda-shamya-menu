@@ -109,8 +109,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("💥 Critical POST Error:", error);
+    
+    // 🔍 فك الخطأ بدقة وعرض تفاصيله الصريحة في الـ Response
+    const errorMessage = error.message || (typeof error === 'object' ? JSON.stringify(error) : String(error));
+    
     return NextResponse.json(
-      { success: false, error: error.message || "حدث خطأ أثناء الحفظ" },
+      { success: false, error: errorMessage || "حدث خطأ غير معروف أثناء الحفظ" },
       { status: 500 }
     );
   }
