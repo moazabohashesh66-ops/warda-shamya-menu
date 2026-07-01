@@ -24,6 +24,8 @@ export async function GET() {
 
 // ================= POST =================
 export async function POST(req: Request) {
+  console.log("--- 🚀 جاري محاولة الحفظ الآن ---");
+  
   try {
     const body = await req.json();
 
@@ -78,15 +80,14 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    console.error("💥 Critical POST Error:", error);
+    console.error("💥 خطأ أثناء التنفيذ:", error);
     
-    // إرجاع الخطأ الحقيقي كما هو
+    // هذه رسالة اختبارية مختلفة لنتأكد أن الكود الجديد تم رفعه
     return NextResponse.json(
       { 
         success: false, 
-        error: "❌ حدث خطأ أثناء الحفظ", 
-        rawError: error.message,
-        stack: error.stack 
+        error: "❌ تجربة اختبار الخطأ 123", 
+        details: error.message 
       }, 
       { status: 500 }
     );
