@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient } from "@supabase/supabase-js";
+
+// إنشاء اتصال مباشر وآمن داخل السيرفر باستخدام المتغيرات
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { persistSession: false }
+});
 
 // ================= GET =================
-// جلب البيانات دائماً وبشكل مباشر من Supabase محلياً وسحابياً
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
+    const { data, error } = await supabase
       .from("categories")
       .select(`
         *,
@@ -22,7 +28,6 @@ export async function GET() {
 }
 
 // ================= POST =================
-// حفظ وتحديث الأقسام والمنتجات سحابياً مع فلترة كاملة لحمايتها من الرفض
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -37,10 +42,9 @@ export async function POST(req: Request) {
     const categoriesToUpsert: any[] = [];
     const productsToUpsert: any[] = [];
 
-    // 🧹 تنظيف وفلترة الحقول لكي تتوافق مع جداول الداتابيز الصارمة
+    // 🧹 تنظيف الحقول لكي تتوافق مع جداول الداتابيز
     for (const category of body) {
       const catId = category.id;
-      // التأكد من أن الـ ID رقمي حقيقي وليس نصاً مؤقتاً من الواجهة
       const isCatIdValid = catId && !isNaN(Number(catId)) && Number(catId) > 0;
 
       const cleanCategory: any = {
@@ -56,7 +60,6 @@ export async function POST(req: Request) {
 
       categoriesToUpsert.push(cleanCategory);
 
-      // فلترة وتجهيز المنتجات التابعة للقسم
       if (category.products && Array.isArray(category.products)) {
         for (const product of category.products) {
           const prodId = product.id;
@@ -68,7 +71,7 @@ export async function POST(req: Request) {
             name_en: product.name_en,
             description: product.description,
             image: product.image,
-            price: product.price ? Number(product.price) : 0, // تحويل السعر لرقم صريح
+            price: product.price ? Number(product.price) : 0,
             size: product.size,
             weight: product.weight,
             is_popular: !!product.is_popular,
@@ -85,18 +88,18 @@ export async function POST(req: Request) {
       }
     }
 
-    // 1. تحديث الأقسام المفلترة دفعة واحدة في الـ Database
+    // 1. تحديث الأقسام
     if (categoriesToUpsert.length > 0) {
-      const { error: catError } = await supabaseAdmin
+      const { error: catError } = await supabase
         .from("categories")
         .upsert(categoriesToUpsert);
 
       if (catError) throw new Error(`خطأ الأقسام: ${catError.message}`);
     }
 
-    // 2. تحديث المنتجات المفلترة دفعة واحدة في الـ Database
+    // 2. تحديث المنتجات
     if (productsToUpsert.length > 0) {
-      const { error: prodError } = await supabaseAdmin
+      const { error: prodError } = await supabase
         .from("products")
         .upsert(productsToUpsert);
 
@@ -107,7 +110,7 @@ export async function POST(req: Request) {
   } catch (error: any) {
     console.error("💥 Critical POST Error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "حدث خطأ داخلي" },
+      { success: false, error: error.message || "حدث خطأ أثناء الحفظ" },
       { status: 500 }
     );
   }
