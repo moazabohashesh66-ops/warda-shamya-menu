@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// إعداد الاتصال بـ Supabase
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey, {
@@ -13,10 +12,7 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from("categories")
-      .select(`
-        *,
-        products(*)
-      `)
+      .select(`*, products(*)`)
       .order("id");
 
     if (error) throw error;
@@ -32,13 +28,12 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     if (!Array.isArray(body)) {
-      return NextResponse.json({ success: false, error: "البيانات غير صحيحة" }, { status: 400 });
+      throw new Error("البيانات يجب أن تكون مصفوفة");
     }
 
     const categoriesToUpsert: any[] = [];
     const productsToUpsert: any[] = [];
 
-    // تنظيف البيانات
     for (const category of body) {
       const catId = category.id;
       const isCatIdValid = catId && !isNaN(Number(catId)) && Number(catId) > 0;
@@ -71,7 +66,6 @@ export async function POST(req: Request) {
       }
     }
 
-    // الحفظ في Supabase فقط
     if (categoriesToUpsert.length > 0) {
       const { error } = await supabase.from("categories").upsert(categoriesToUpsert);
       if (error) throw new Error(`Category Error: ${error.message}`);
@@ -84,8 +78,16 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
+    console.error("💥 Critical POST Error:", error);
+    
+    // إرجاع الخطأ الحقيقي كما هو
     return NextResponse.json(
-      { success: false, error: "❌ حدث خطأ أثناء الحفظ", details: error.message },
+      { 
+        success: false, 
+        error: "❌ حدث خطأ أثناء الحفظ", 
+        rawError: error.message,
+        stack: error.stack 
+      }, 
       { status: 500 }
     );
   }
