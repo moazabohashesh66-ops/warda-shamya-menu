@@ -7,25 +7,8 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: { persistSession: false }
 });
 
-// ================= GET =================
-export async function GET() {
-  try {
-    const { data, error } = await supabase
-      .from("categories")
-      .select(`*, products(*)`)
-      .order("id");
-
-    if (error) throw error;
-    return NextResponse.json(data);
-  } catch (error: any) {
-    return NextResponse.json({ error: "فشل جلب البيانات", details: error.message }, { status: 500 });
-  }
-}
-
 // ================= POST =================
 export async function POST(req: Request) {
-  console.log("--- 🚀 جاري محاولة الحفظ الآن ---");
-  
   try {
     const body = await req.json();
 
@@ -33,62 +16,50 @@ export async function POST(req: Request) {
       throw new Error("البيانات يجب أن تكون مصفوفة");
     }
 
-    const categoriesToUpsert: any[] = [];
-    const productsToUpsert: any[] = [];
+    // 1. حذف المنتجات أولاً لتجنب تعارض العلاقات (Foreign Key Constraint)
+    const { error: delProdErr } = await supabase.from("products").delete().neq("id", -9999);
+    if (delProdErr) throw new Error("فشل حذف المنتجات القديمة: " + delProdErr.message);
 
+    // 2. حذف الأقسام ثانياً
+    const { error: delCatErr } = await supabase.from("categories").delete().neq("id", -9999);
+    if (delCatErr) throw new Error("فشل حذف الأقسام القديمة: " + delCatErr.message);
+
+    // 3. إدخال البيانات الجديدة
     for (const category of body) {
-      const catId = category.id;
-      const isCatIdValid = catId && !isNaN(Number(catId)) && Number(catId) > 0;
-
-      categoriesToUpsert.push({
-        id: isCatIdValid ? Number(catId) : undefined,
+      const { error: catErr } = await supabase.from("categories").insert({
+        id: category.id,
         name: category.name,
-        name_en: category.name_en,
-        icon: category.icon,
-        image: category.image,
+        name_en: category.nameEn || category.name,
+        icon: category.icon || "📦",
+        image: category.image || null,
       });
+      if (catErr) throw new Error(`خطأ في إضافة القسم ${category.name}: ${catErr.message}`);
 
-      if (category.products && Array.isArray(category.products)) {
+      if (Array.isArray(category.products)) {
         for (const product of category.products) {
-          productsToUpsert.push({
-            id: (product.id && !isNaN(Number(product.id))) ? Number(product.id) : undefined,
-            category_id: isCatIdValid ? Number(catId) : category.id,
+          const { error: prodErr } = await supabase.from("products").insert({
+            category_id: category.id,
             name: product.name,
-            name_en: product.name_en,
-            description: product.description,
-            image: product.image,
+            name_en: product.nameEn || product.name,
             price: Number(product.price) || 0,
-            size: product.size,
-            weight: product.weight,
-            is_popular: !!product.is_popular,
-            is_new: !!product.is_new,
-            is_available: product.is_available !== false,
+            description: product.description || null,
+            image: product.image || null,
+            is_available: product.isAvailable ?? true,
+            is_popular: !!product.isPopular,
+            is_new: !!product.isNew,
+            size: product.size || null,
+            weight: product.weight || null,
           });
+          if (prodErr) throw new Error(`خطأ في إضافة المنتج ${product.name}: ${prodErr.message}`);
         }
       }
     }
 
-    if (categoriesToUpsert.length > 0) {
-      const { error } = await supabase.from("categories").upsert(categoriesToUpsert);
-      if (error) throw new Error(`Category Error: ${error.message}`);
-    }
-
-    if (productsToUpsert.length > 0) {
-      const { error } = await supabase.from("products").upsert(productsToUpsert);
-      if (error) throw new Error(`Product Error: ${error.message}`);
-    }
-
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, message: "تم تحديث القائمة بنجاح" });
   } catch (error: any) {
-    console.error("💥 خطأ أثناء التنفيذ:", error);
-    
-    // هذه رسالة اختبارية مختلفة لنتأكد أن الكود الجديد تم رفعه
+    console.error("💥 خطأ في الحفظ:", error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: "❌ تجربة اختبار الخطأ 123", 
-        details: error.message 
-      }, 
+      { success: false, error: "حدث خطأ أثناء الحفظ", details: error.message },
       { status: 500 }
     );
   }
