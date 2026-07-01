@@ -1,9 +1,21 @@
 import type { Metadata } from "next";
+import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Navbar from "@/components/shared/Navbar";
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "وردة شامية",
-  description: "مطعم وردة شامية - المنيو الإلكتروني",
+  title: "وردة شامية - منيو المطعم",
+  description: "أفضل المأكولات السورية",
 };
 
 export default function RootLayout({
@@ -12,37 +24,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl">
-      <body className="bg-[#1a0e0a] text-white overflow-x-hidden">
+    <html lang="ar" dir="rtl" data-scroll-behavior="smooth">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <Navbar />
         {children}
-
-        {/* WhatsApp Button */}
-        <a
-          href="https://wa.me/201013839628"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="
-            fixed
-            bottom-6
-            right-6
-            z-50
-            w-16
-            h-16
-            rounded-full
-            bg-green-500
-            flex
-            items-center
-            justify-center
-            text-3xl
-            shadow-2xl
-            hover:scale-110
-            hover:bg-green-600
-            transition-all
-            duration-300
-          "
-        >
-          💬
-        </a>
       </body>
     </html>
   );

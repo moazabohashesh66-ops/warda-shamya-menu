@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import fs from "fs";
-import path from "path";
 
 export async function POST(req: Request) {
   try {
@@ -14,53 +12,38 @@ export async function POST(req: Request) {
       );
     }
 
-    // أنواع الملفات المسموحة
-    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
-    if (!allowedTypes.includes(file.type)) {
+    // التحقق من نوع الملف
+    if (!file.type.startsWith("image/")) {
       return NextResponse.json(
-        { error: "❌ نوع الملف غير مدعوم" },
+        { error: "❌ يرجى اختيار ملف صورة فقط" },
         { status: 400 }
       );
     }
 
-    // الحجم الأقصى (5MB)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
+    // التحقق من الحجم (5MB)
+    if (file.size > 5 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "❌ حجم الملف كبير جداً (الحد الأقصى 5MB)" },
+        { error: "❌ حجم الصورة كبير جداً (الحد الأقصى 5 ميجابايت)" },
         { status: 400 }
       );
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    const ext = path.extname(file.name);
-    const name = Date.now() + ext;
-
-    // مسار التخزين
-    const uploadDir = path.join(process.cwd(), "public/uploads");
     
-    // إنشاء المجلد إذا لم يكن موجوداً
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const uploadPath = path.join(uploadDir, name);
-    fs.writeFileSync(uploadPath, buffer);
-
-    console.log("✅ تم حفظ الملف في:", uploadPath);
-
-    // الرابط العام للصورة
-    const publicUrl = `/uploads/${name}`;
+    // تحويل الصورة إلى Base64
+    const base64 = buffer.toString('base64');
+    const mimeType = file.type;
+    const dataUrl = `data:${mimeType};base64,${base64}`;
 
     return NextResponse.json({
       success: true,
-      url: publicUrl,
+      url: dataUrl,
     });
   } catch (error) {
     console.error("❌ خطأ في رفع الملف:", error);
     return NextResponse.json(
-      { error: "❌ حدث خطأ أثناء رفع الملف: " + (error as any).message },
+      { error: "❌ حدث خطأ أثناء رفع الملف" },
       { status: 500 }
     );
   }

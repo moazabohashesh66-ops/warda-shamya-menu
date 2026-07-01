@@ -333,14 +333,8 @@ export default function AdminPage() {
     [categories]
   );
 
-  // ===== Initial Load + Auth Check =====
+  // ===== Initial Load =====
   useEffect(() => {
-    // التحقق من التوكن
-    const admin = localStorage.getItem("admin");
-    if (admin !== "ok") {
-      window.location.href = "/admin/login";
-      return;
-    }
     loadMenu();
   }, [loadMenu]);
 
@@ -677,7 +671,8 @@ export default function AdminPage() {
                                       actualIndex,
                                       actualPIndex!,
                                       "description",
-                                      e.target.value)
+                                      e.target.value
+                                    )
                                   }
                                   className="w-full bg-white/5 border border-white/10 rounded-lg p-2 text-sm text-white outline-none focus:border-yellow-400 transition"
                                   placeholder="وصف المنتج"
