@@ -1,50 +1,85 @@
 import { NextResponse } from "next/server";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { v4 as uuid } from "uuid";
 
 export async function POST(req: Request) {
   try {
     const formData = await req.formData();
-    const file: any = formData.get("file");
+    const file = formData.get("file") as File;
 
     if (!file) {
       return NextResponse.json(
-        { error: "❌ لم يتم إرسال أي ملف" },
-        { status: 400 }
-      );
-    }
-
-    // التحقق من نوع الملف
-    if (!file.type.startsWith("image/")) {
-      return NextResponse.json(
-        { error: "❌ يرجى اختيار ملف صورة فقط" },
-        { status: 400 }
-      );
-    }
-
-    // التحقق من الحجم (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "❌ حجم الصورة كبير جداً (الحد الأقصى 5 ميجابايت)" },
-        { status: 400 }
+        {
+          success: false,
+          error: "لم يتم اختيار صورة",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
-    
-    // تحويل الصورة إلى Base64
-    const base64 = buffer.toString('base64');
-    const mimeType = file.type;
-    const dataUrl = `data:${mimeType};base64,${base64}`;
+
+    // ==========================
+    // اختبار الاتصال بـ Storage
+    // ==========================
+
+    const { data: buckets, error: bucketError } =
+      await supabaseAdmin.storage.listBuckets();
+
+    console.log("=================================");
+    console.log("SUPABASE STORAGE TEST");
+    console.log("Buckets => ", buckets);
+    console.log("Bucket Error => ", bucketError);
+    console.log("=================================");
+
+    const ext = file.name.split(".").pop();
+    const fileName = `${uuid()}.${ext}`;
+
+    const { error } = await supabaseAdmin.storage
+      .from("menu-images")
+      .upload(fileName, buffer, {
+        upsert: true,
+        contentType: file.type,
+      });
+
+    if (error) {
+      console.error(error);
+
+      return NextResponse.json(
+        {
+          success: false,
+          error: error.message,
+        },
+        {
+          status: 500,
+        }
+      );
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabaseAdmin.storage
+      .from("menu-images")
+      .getPublicUrl(fileName);
 
     return NextResponse.json({
       success: true,
-      url: dataUrl,
+      url: publicUrl,
     });
-  } catch (error) {
-    console.error("❌ خطأ في رفع الملف:", error);
+  } catch (err: any) {
+    console.error(err);
+
     return NextResponse.json(
-      { error: "❌ حدث خطأ أثناء رفع الملف" },
-      { status: 500 }
+      {
+        success: false,
+        error: err.message,
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
