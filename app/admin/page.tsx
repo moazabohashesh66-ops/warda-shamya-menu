@@ -16,7 +16,6 @@ import {
   Copy,
 } from "lucide-react";
 
-// ===================== Types =====================
 type Product = {
   id: string;
   name: string;
@@ -47,9 +46,7 @@ type Toast = {
   type: "success" | "error" | "info";
 };
 
-// ===================== Component =====================
 export default function AdminPage() {
-  // ===== State =====
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,7 +60,6 @@ export default function AdminPage() {
   const fileContextRef = useRef<{ cIndex: number; pIndex?: number } | null>(null);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // ===== Toast System =====
   const showToast = useCallback((message: string, type: Toast["type"] = "info") => {
     const id = Date.now().toString();
     setToasts((prev) => [...prev, { id, message, type }]);
@@ -72,7 +68,6 @@ export default function AdminPage() {
     }, 3500);
   }, []);
 
-  // ===== API Calls =====
   const loadMenu = useCallback(async () => {
     try {
       const res = await fetch("/api/menu");
@@ -86,25 +81,30 @@ export default function AdminPage() {
     }
   }, [showToast]);
 
+  // ===== SAVE MENU (Simplified) =====
   const saveMenu = useCallback(
     async (data: Category[], silent = false) => {
       setSaving(true);
       try {
+        console.log("📤 Saving menu...", data.length);
         const res = await fetch("/api/menu", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
         const result = await res.json();
+        console.log("📥 Save result:", result);
+        
         if (result.success) {
           if (!silent) showToast("✅ تم الحفظ بنجاح", "success");
           setPendingChanges(false);
           return true;
         } else {
-          showToast("❌ فشل الحفظ", "error");
+          showToast("❌ فشل الحفظ: " + (result.error || "خطأ غير معروف"), "error");
           return false;
         }
-      } catch {
+      } catch (error) {
+        console.error("❌ Save error:", error);
         showToast("❌ خطأ في الاتصال", "error");
         return false;
       } finally {
@@ -125,7 +125,6 @@ export default function AdminPage() {
     [saveMenu]
   );
 
-  // ===== UPDATE FUNCTIONS (Real-Time) =====
   const updateCategory = useCallback(
     (index: number, key: keyof Category, value: any) => {
       setCategories((prev) => {
@@ -152,7 +151,6 @@ export default function AdminPage() {
     [autoSave]
   );
 
-  // ===== CRUD - Categories =====
   const addCategory = useCallback(() => {
     const newCategory: Category = {
       id: `cat_${Date.now()}`,
@@ -183,7 +181,6 @@ export default function AdminPage() {
     [autoSave, showToast]
   );
 
-  // ===== CRUD - Products =====
   const addProduct = useCallback(
     (cIndex: number) => {
       setCategories((prev) => {
@@ -238,7 +235,6 @@ export default function AdminPage() {
     [autoSave, showToast]
   );
 
-  // ===== Toggle Category =====
   const toggleCategory = useCallback((categoryId: string) => {
     setCategories((prev) =>
       prev.map((c) =>
@@ -254,14 +250,7 @@ export default function AdminPage() {
     );
   }, [expandedAll]);
 
-  // ===== IMAGE UPLOAD =====
-  const triggerFileUpload = useCallback((cIndex: number, pIndex?: number) => {
-    fileContextRef.current = { cIndex, pIndex };
-    if (fileInputRef.current) {
-      fileInputRef.current.click();
-    }
-  }, []);
-
+  // ===== IMAGE UPLOAD (Simplified) =====
   const handleFileUpload = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -283,35 +272,29 @@ export default function AdminPage() {
         return;
       }
 
-      const formData = new FormData();
-      formData.append("file", file);
-
-      try {
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
-        const data = await res.json();
-        if (data.url) {
-          if (pIndex !== undefined) {
-            updateProduct(cIndex, pIndex, "image", data.url);
-          } else {
-            updateCategory(cIndex, "image", data.url);
-          }
-          showToast("✅ تم رفع الصورة", "success");
+      // تحويل الصورة إلى Base64 مباشرة
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        
+        if (pIndex !== undefined) {
+          updateProduct(cIndex, pIndex, "image", dataUrl);
         } else {
-          showToast("❌ فشل رفع الصورة", "error");
+          updateCategory(cIndex, "image", dataUrl);
         }
-      } catch {
-        showToast("❌ خطأ في رفع الصورة", "error");
-      }
+        showToast("✅ تم رفع الصورة", "success");
+      };
+      reader.onerror = () => {
+        showToast("❌ خطأ في قراءة الصورة", "error");
+      };
+      
       e.target.value = "";
       fileContextRef.current = null;
     },
     [updateCategory, updateProduct, showToast]
   );
 
-  // ===== Search =====
   const filteredCategories = useMemo(() => {
     if (!searchTerm.trim()) return categories;
     const term = searchTerm.toLowerCase().trim();
@@ -327,25 +310,26 @@ export default function AdminPage() {
       .filter((cat) => cat.products.length > 0 || cat.name.toLowerCase().includes(term));
   }, [categories, searchTerm]);
 
-  // ===== Stats =====
   const totalProducts = useMemo(
     () => categories.reduce((acc, cat) => acc + cat.products.length, 0),
     [categories]
   );
 
-  // ===== Initial Load =====
   useEffect(() => {
+    const admin = localStorage.getItem("admin");
+    if (admin !== "ok") {
+      window.location.href = "/admin/login";
+      return;
+    }
     loadMenu();
   }, [loadMenu]);
 
-  // ===== Cleanup =====
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
     };
   }, []);
 
-  // ===== Loading =====
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#120806]">
@@ -359,7 +343,6 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#120806] via-[#1a0e0a] to-[#2d1408] p-4 md:p-8 text-white">
-      {/* ===== Toasts ===== */}
       <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
         {toasts.map((toast) => (
           <div
@@ -377,7 +360,6 @@ export default function AdminPage() {
         ))}
       </div>
 
-      {/* ===== Image Preview ===== */}
       {selectedImage && (
         <div
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
@@ -399,7 +381,6 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ===== Hidden File Input ===== */}
       <input
         type="file"
         ref={fileInputRef}
@@ -408,7 +389,6 @@ export default function AdminPage() {
         onChange={handleFileUpload}
       />
 
-      {/* ===== Header ===== */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-3xl md:text-4xl font-bold text-yellow-400 flex items-center gap-3">
@@ -451,7 +431,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* ===== Search ===== */}
       <div className="relative mb-6">
         <Search size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30" />
         <input
@@ -463,7 +442,6 @@ export default function AdminPage() {
         />
       </div>
 
-      {/* ===== Categories ===== */}
       {filteredCategories.length === 0 ? (
         <div className="text-center py-20 text-white/30">
           <p className="text-2xl">📭 لا توجد نتائج</p>
@@ -480,7 +458,6 @@ export default function AdminPage() {
               key={category.id}
               className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 mb-4 overflow-hidden transition-all"
             >
-              {/* ===== Category Header (IMAGE + NAME visible outside) ===== */}
               <div
                 className="flex flex-wrap items-center gap-3 p-4 cursor-pointer hover:bg-white/5 transition"
                 onClick={() => toggleCategory(category.id)}
@@ -515,7 +492,6 @@ export default function AdminPage() {
                 </div>
 
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* ✅ Category Image Visible Outside (REAL-TIME) */}
                   {category.image && (
                     <div
                       className="w-10 h-10 rounded-xl overflow-hidden border border-white/20 cursor-pointer hover:border-yellow-400 transition flex-shrink-0"
@@ -567,7 +543,6 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* ===== Category Content (Expanded) ===== */}
               {isExpanded && (
                 <div className="p-4 pt-2 border-t border-white/5">
                   <div className="mb-4">
@@ -597,7 +572,6 @@ export default function AdminPage() {
                     )}
                   </div>
 
-                  {/* ===== Products ===== */}
                   <div className="space-y-3">
                     {category.products.length === 0 ? (
                       <div className="text-center text-white/20 py-6 text-sm">
