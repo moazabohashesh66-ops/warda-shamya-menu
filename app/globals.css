@@ -2,116 +2,86 @@
 @tailwind components;
 @tailwind utilities;
 
-
+/* =========================
+   Root Variables
+========================= */
 :root {
-  --background:#120A08;
-  --foreground:#ffffff;
+  --background: #120A08;
+  --foreground: #ffffff;
 }
 
+/* =========================
+   Base Reset
+========================= */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 html {
-  scroll-behavior:smooth;
+  scroll-behavior: smooth;
 }
-
 
 body {
+  background: radial-gradient(
+      circle at top,
+      rgba(234, 179, 8, 0.15),
+      transparent 40%
+    ),
+    #120A08;
 
-  background:
-  radial-gradient(
-    circle at top,
-    rgba(234,179,8,.15),
-    transparent 35%
-  ),
-  #120A08;
-
-  color:var(--foreground);
-
-  font-family:
-  Arial,
-  Helvetica,
-  sans-serif;
-
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
 }
 
+/* =========================
+   Typography / Elements
+========================= */
+a, button {
+  -webkit-tap-highlight-color: transparent;
+}
 
-/* Scrollbar */
-
+/* =========================
+   Scrollbar (Modern look)
+========================= */
 ::-webkit-scrollbar {
-  width:8px;
+  width: 8px;
 }
-
 
 ::-webkit-scrollbar-track {
-  background:#120A08;
+  background: #120A08;
 }
-
 
 ::-webkit-scrollbar-thumb {
-
-  background:
-  linear-gradient(
-    #facc15,
-    #f97316
-  );
-
-  border-radius:20px;
-
+  background: linear-gradient(180deg, #facc15, #f97316);
+  border-radius: 20px;
 }
 
-
-
-/* Glass */
-
+/* =========================
+   Glass Effect
+========================= */
 .glass {
-
-  background:
-  rgba(255,255,255,.08);
-
-  backdrop-filter:
-  blur(20px);
-
-  border:
-  1px solid
-  rgba(255,255,255,.1);
-
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
 }
 
-
-/* Glow animation */
-
+/* =========================
+   Animations
+========================= */
 @keyframes float {
-
-  0%,100% {
-    transform:translateY(0);
+  0%, 100% {
+    transform: translateY(0);
   }
 
   50% {
-    transform:translateY(-15px);
+    transform: translateY(-12px);
   }
-
 }
-
 
 .float {
-
- animation:float 4s ease-in-out infinite;
- html{
- scroll-behavior:smooth;
-}
-
-*{
- box-sizing:border-box;
-}
-
-body{
- overflow-x:hidden;
- section{
-  position:relative;
-}
-
-button,a{
-  -webkit-tap-highlight-color: transparent;
-}
-}
-
+  animation: float 4s ease-in-out infinite;
 }
