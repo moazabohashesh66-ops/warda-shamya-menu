@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+
+// ====================== GET ======================
 
 export async function GET() {
   try {
@@ -12,83 +15,121 @@ export async function GET() {
       .order("id");
 
     if (error) throw error;
+
     return NextResponse.json(data || []);
-  } catch (error) {
-    console.error("❌ خطأ في GET:", error);
-    return NextResponse.json({ error: "خطأ في جلب البيانات" }, { status: 500 });
+  } catch (error: any) {
+    console.error("❌ GET ERROR:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      {
+        status: 500,
+      }
+    );
   }
 }
 
+// ====================== POST ======================
+
 export async function POST(req: Request) {
   try {
-    const data = await req.json();
+    const categories = await req.json();
 
-    if (!Array.isArray(data)) {
+    if (!Array.isArray(categories)) {
       return NextResponse.json(
-        { error: "البيانات غير صحيحة" },
-        { status: 400 }
+        {
+          success: false,
+          error: "Invalid Data",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    // حذف البيانات القديمة
-    const { error: deleteProductsError } = await supabase
-      .from("products")
-      .delete()
-      .neq("id", "");
+    for (const category of categories) {
+      const { products, ...categoryData } = category;
 
-    if (deleteProductsError) throw deleteProductsError;
-
-    const { error: deleteCategoriesError } = await supabase
-      .from("categories")
-      .delete()
-      .neq("id", "");
-
-    if (deleteCategoriesError) throw deleteCategoriesError;
-
-    // إدخال البيانات الجديدة
-    for (const category of data) {
-      const { error: insertCategoryError } = await supabase
+      // تحديث القسم
+      const { error: categoryError } = await supabaseAdmin
         .from("categories")
-        .insert({
-          id: category.id,
-          name: category.name,
-          name_en: category.nameEn || category.name,
-          icon: category.icon || "📦",
-          image: category.image || null,
-        });
+        .upsert(
+          {
+            id: categoryData.id,
+            name: categoryData.name,
+            name_en: categoryData.name_en || categoryData.name,
+            icon: categoryData.icon,
+            image: categoryData.image,
+          },
+          {
+            onConflict: "id",
+          }
+        );
 
-      if (insertCategoryError) throw insertCategoryError;
+      if (categoryError) {
+        console.error("CATEGORY ERROR:", categoryError);
+        throw categoryError;
+      }
 
-      if (category.products && Array.isArray(category.products)) {
-        for (const product of category.products) {
-          const { error: insertProductError } = await supabase
+      // تحديث المنتجات
+      if (Array.isArray(products)) {
+        for (const product of products) {
+          const { error: productError } = await supabaseAdmin
             .from("products")
-            .insert({
-              id: product.id || `p${Date.now()}`,
-              category_id: category.id,
-              name: product.name,
-              name_en: product.nameEn || product.name,
-              price: product.price || 0,
-              description: product.description || null,
-              image: product.image || null,
-              is_available: product.isAvailable ?? true,
-              is_popular: product.isPopular ?? false,
-              is_new: product.isNew ?? false,
-              size: product.size || null,
-              weight: product.weight || null,
-            });
+            .upsert(
+              {
+                id: product.id,
+                category_id: category.id,
 
-          if (insertProductError) throw insertProductError;
+                name: product.name,
+                name_en: product.name_en || product.name,
+
+                description: product.description,
+
+                image: product.image,
+
+                price: product.price,
+
+                size: product.size,
+
+                weight: product.weight,
+
+                is_popular: product.is_popular,
+
+                is_new: product.is_new,
+
+                is_available: product.is_available,
+              },
+              {
+                onConflict: "id",
+              }
+            );
+
+          if (productError) {
+            console.error("PRODUCT ERROR:", productError);
+            throw productError;
+          }
         }
       }
     }
 
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("❌ خطأ في POST:", error);
+    return NextResponse.json({
+      success: true,
+    });
+  } catch (error: any) {
+    console.error("❌ POST ERROR:", error);
+
     return NextResponse.json(
-      { error: "خطأ في حفظ البيانات" },
-      { status: 500 }
+      {
+        success: false,
+        error: error.message,
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
