@@ -1,27 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const login = () => {
+  const login = async () => {
     setLoading(true);
     setError("");
 
-    console.log("🔑 محاولة الدخول بكلمة المرور:", password);
+    try {
+      const res = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+      });
 
-    if (password === "147") {
-      console.log("✅ تم تسجيل الدخول بنجاح!");
-      localStorage.setItem("admin", "ok");
-      router.push("/admin");
-    } else {
-      console.log("❌ كلمة المرور غير صحيحة");
-      setError("❌ كلمة المرور غير صحيحة");
+      const data = await res.json();
+
+      if (data.success) {
+        // ✅ مش محتاج localStorage دلوقتي
+        window.location.href = "/admin";
+      } else {
+        setError("❌ كلمة المرور غير صحيحة");
+      }
+    } catch (err) {
+      setError("❌ حدث خطأ، حاول مرة أخرى");
+    } finally {
       setLoading(false);
     }
   };
@@ -32,7 +39,6 @@ export default function LoginPage() {
         <h1 className="text-3xl font-bold text-center text-white mb-8">
           🛠️ لوحة الإدارة
         </h1>
-        
         <input
           type="password"
           placeholder="🔑 كلمة المرور"
@@ -42,13 +48,7 @@ export default function LoginPage() {
           className="w-full bg-white/10 border border-white/20 rounded-xl p-4 text-white placeholder:text-white/40 outline-none focus:border-yellow-500 transition"
           disabled={loading}
         />
-        
-        {error && (
-          <p className="text-red-400 mt-3 text-center font-semibold">
-            ❌ {error}
-          </p>
-        )}
-        
+        {error && <p className="text-red-400 mt-3 text-center">{error}</p>}
         <button
           onClick={login}
           disabled={loading}
