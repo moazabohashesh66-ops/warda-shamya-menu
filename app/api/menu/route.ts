@@ -3,7 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET() {
   try {
-    // الأقسام
+    // جلب الأقسام
     const { data: categories, error: catError } = await supabaseAdmin
       .from("categories")
       .select("*")
@@ -11,7 +11,7 @@ export async function GET() {
 
     if (catError) throw catError;
 
-    // المنتجات
+    // جلب المنتجات
     const { data: products, error: prodError } = await supabaseAdmin
       .from("products")
       .select("*")
@@ -19,23 +19,22 @@ export async function GET() {
 
     if (prodError) throw prodError;
 
-    const menu =
-      categories?.map((cat: any) => ({
-        ...cat,
-        products:
-          products?.filter(
-            (p: any) => p.category_id === cat.id
-          ) || [],
-      })) || [];
+    // دمج المنتجات داخل الأقسام
+    const menu = categories.map((category: any) => ({
+      ...category,
+      products: products.filter(
+        (product: any) => product.category_id === category.id
+      ),
+    }));
 
     return NextResponse.json(menu);
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("GET ERROR:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: "Failed to load menu",
+        error: "فشل تحميل البيانات",
       },
       {
         status: 500,
@@ -48,9 +47,9 @@ export async function POST(req: Request) {
   try {
     const categories = await req.json();
 
+    // تحديث الأقسام
     for (const category of categories) {
-      // تحديث القسم
-      const { products, isExpanded, ...categoryData } = category;
+      const { products, ...categoryData } = category;
 
       const { error: catError } = await supabaseAdmin
         .from("categories")
@@ -66,7 +65,7 @@ export async function POST(req: Request) {
 
       // تحديث المنتجات
       for (const product of products) {
-        const { error: productError } = await supabaseAdmin
+        const { error: prodError } = await supabaseAdmin
           .from("products")
           .update({
             name: product.name,
@@ -82,20 +81,20 @@ export async function POST(req: Request) {
           })
           .eq("id", product.id);
 
-        if (productError) throw productError;
+        if (prodError) throw prodError;
       }
     }
 
     return NextResponse.json({
       success: true,
     });
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error("POST ERROR:", error);
 
     return NextResponse.json(
       {
         success: false,
-        error: "Save failed",
+        error: "فشل حفظ البيانات",
       },
       {
         status: 500,
