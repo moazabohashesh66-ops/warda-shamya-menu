@@ -5,14 +5,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft, Sparkles } from "lucide-react";
 
-type Category = {
-  id: string;
-  name: string;
-  name_en?: string;
-  image?: string;
-  icon?: string;
-};
-
 const gradients = [
   "from-[#8B1E1E] to-[#D97706]",
   "from-[#14532D] to-[#16A34A]",
@@ -22,256 +14,188 @@ const gradients = [
   "from-[#0F766E] to-[#06B6D4]",
 ];
 
-export default function CategoryGrid({
-  categories,
-}: {
-  categories: Category[];
-}) {
-  return (
-    <section
-      id="categories"
-      className="relative overflow-hidden py-24 px-6"
-    >
-      {/* Background */}
-
-      <div className="absolute inset-0">
-
-        <div className="absolute -top-44 left-1/2 -translate-x-1/2 w-[650px] h-[650px] rounded-full bg-yellow-500/10 blur-[170px]" />
-
-        <div className="absolute bottom-0 right-0 w-[450px] h-[450px] rounded-full bg-orange-500/10 blur-[170px]" />
-
+export default function CategoryGrid({ categories = [] }: { categories: any[] }) {
+  if (!categories || !Array.isArray(categories) || categories.length === 0) {
+    return (
+      <div className="text-center py-20 text-white/40">
+        <p className="text-2xl mb-2">📭</p>
+        <p>لا توجد أقسام لعرضها</p>
+        <p className="text-sm mt-2 text-white/20">يرجى إضافة أقسام من لوحة التحكم</p>
       </div>
+    );
+  }
 
-      <div className="relative max-w-7xl mx-auto">
-
+  return (
+    <div className="relative overflow-hidden py-8 px-4">
+      <div className="relative z-10 max-w-7xl mx-auto">
+        {/* Heading */}
         <motion.div
-          initial={{ opacity: 0, y: 35 }}
+          initial={{ opacity: 0, y: 25 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: .6 }}
-          className="text-center mb-20"
+          className="text-center mb-10"
         >
-
-          <div className="inline-flex items-center gap-2 rounded-full border border-yellow-500/30 bg-yellow-500/10 px-6 py-3 text-yellow-400 font-bold">
-
-            <Sparkles size={18} />
-
-            أقسام المنيو
-
+          <div className="inline-flex items-center gap-2 rounded-full border border-yellow-500/20 bg-yellow-500/10 px-5 py-2 text-yellow-400 text-sm font-semibold">
+            <Sparkles size={16} />
+            قائمة الطعام
           </div>
 
-          <h2 className="mt-8 text-5xl lg:text-6xl font-black text-white">
-
-            اختر قسمك المفضل
-
+          <h2 className="mt-5 text-3xl md:text-4xl font-black text-white">
+            منيو <span className="text-yellow-400">وردة شامية</span>
           </h2>
 
-          <p className="mt-6 max-w-2xl mx-auto text-xl text-white/60 leading-9">
-
-            جميع الأقسام يتم تحديثها مباشرة من لوحة التحكم
-            بدون الحاجة لإعادة نشر الموقع.
-
+          <p className="mt-3 text-white/50 text-base max-w-xl mx-auto">
+            اختر القسم الذي ترغب في تصفحه واستمتع بأشهى الأطباق السورية.
           </p>
-
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-                    {categories.map((category, index) => (
-
+        {/* Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-5">
+          {categories.map((category, index) => (
             <motion.div
               key={category.id}
-              initial={{ opacity: 0, y: 40 }}
+              initial={{ opacity: 0, y: 35 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{
-                duration: .5,
+                duration: .45,
                 delay: index * .08,
               }}
               whileHover={{
-                y: -12,
-                scale: 1.03,
+                y: -8,
+                scale: 1.02,
               }}
-              className="group"
             >
-
               <Link
                 href={`/menu/${category.id}`}
                 className="
+                group
                 block
                 overflow-hidden
-                rounded-[30px]
+                rounded-2xl
                 border
-                border-white/10
-                bg-white/[0.05]
-                backdrop-blur-2xl
+                border-yellow-500/10
+                bg-white/[0.04]
+                backdrop-blur-xl
                 transition-all
                 duration-500
-                hover:border-yellow-500/50
-                hover:shadow-[0_20px_60px_rgba(0,0,0,.5)]
+                hover:border-yellow-500/40
+                hover:shadow-[0_20px_50px_rgba(0,0,0,.45)]
                 "
               >
-
-                {/* الصورة */}
-
-                <div className="relative h-64 overflow-hidden">
-
+                {/* Image */}
+                <div className="relative h-44 md:h-52 overflow-hidden">
                   {category.image ? (
-
                     <Image
                       src={category.image}
                       alt={category.name}
                       fill
+                      sizes="(max-width:768px)50vw,(max-width:1200px)33vw,25vw"
                       className="
                       object-cover
-                      transition-all
+                      transition
                       duration-700
                       group-hover:scale-110
                       "
                     />
-
                   ) : (
-
                     <div
-                      className={`w-full h-full bg-gradient-to-br ${
+                      className={`h-full w-full bg-gradient-to-br ${
                         gradients[index % gradients.length]
                       } flex items-center justify-center`}
                     >
-
-                      <span className="text-7xl">
-                        {category.icon || "🍽️"}
-                      </span>
-
+                      <span className="text-7xl">{category.icon}</span>
                     </div>
-
                   )}
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#120806] via-black/20 to-transparent" />
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#120806] via-black/30 to-transparent" />
 
-                  <div
-                    className="
-                    absolute
-                    top-5
-                    left-5
-                    w-14
-                    h-14
-                    rounded-2xl
-                    bg-black/40
-                    backdrop-blur-xl
-                    border
-                    border-white/20
-                    flex
-                    items-center
-                    justify-center
-                    "
-                  >
-
-                    <span className="text-2xl">
-                      {category.icon || "🍴"}
-                    </span>
-
+                  {/* Icon */}
+                  <div className="
+                  absolute
+                  top-4
+                  left-4
+                  w-12
+                  h-12
+                  rounded-2xl
+                  bg-black/35
+                  backdrop-blur-xl
+                  border
+                  border-white/10
+                  flex
+                  items-center
+                  justify-center
+                  ">
+                    <span className="text-2xl">{category.icon}</span>
                   </div>
-
                 </div>
 
-                {/* المحتوى */}
-
-                <div className="p-7">
-
-                  <h3
-                    className="
-                    text-2xl
-                    font-black
-                    text-white
-                    group-hover:text-yellow-400
-                    transition
-                    "
-                  >
+                {/* Content */}
+                <div className="p-5">
+                  <h3 className="
+                  text-lg
+                  font-bold
+                  text-white
+                  transition
+                  group-hover:text-yellow-400
+                  ">
                     {category.name}
                   </h3>
 
-                  <p className="mt-3 text-white/55 leading-7">
-
-                    اضغط للدخول واستعراض جميع الأصناف الخاصة بهذا القسم.
-
+                  <p className="
+                  mt-1
+                  text-sm
+                  text-white/40
+                  ">
+                    {category.products?.length || 0} صنف
                   </p>
 
-                  <div className="mt-8 flex items-center justify-between">
-
+                  <div className="
+                  mt-4
+                  flex
+                  items-center
+                  justify-between
+                  ">
                     <span
                       className="
                       inline-flex
                       items-center
+                      gap-2
                       rounded-full
                       bg-gradient-to-r
                       from-yellow-500
                       to-orange-500
-                      px-6
-                      py-3
+                      px-4
+                      py-1.5
+                      text-xs
+                      font-bold
                       text-black
-                      font-black
+                      transition
+                      group-hover:from-yellow-400
+                      group-hover:to-orange-400
                       "
                     >
-                      استعراض القسم
+                      استعرض
                     </span>
 
                     <ArrowLeft
+                      size={18}
                       className="
                       text-yellow-400
                       transition-all
                       duration-300
-                      group-hover:-translate-x-2
+                      group-hover:-translate-x-1
                       "
-                      size={22}
                     />
-
                   </div>
-
                 </div>
-
               </Link>
-
             </motion.div>
-
-          ))}        </div>
-
-        {/* رسالة عند عدم وجود أقسام */}
-
-        {categories.length === 0 && (
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="
-            mt-20
-            rounded-3xl
-            border
-            border-yellow-500/20
-            bg-white/5
-            backdrop-blur-xl
-            p-16
-            text-center
-            "
-          >
-
-            <div className="text-7xl mb-6">
-              🍽️
-            </div>
-
-            <h3 className="text-4xl font-black text-white">
-              لا توجد أقسام حالياً
-            </h3>
-
-            <p className="mt-5 text-white/60 text-lg">
-              يمكنك إضافة الأقسام من لوحة التحكم،
-              وستظهر هنا مباشرة بدون إعادة نشر الموقع.
-            </p>
-
-          </motion.div>
-
-        )}
-
+          ))}
+        </div>
       </div>
-
-    </section>
+    </div>
   );
 }
