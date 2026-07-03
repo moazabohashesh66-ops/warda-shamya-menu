@@ -1,20 +1,6 @@
-"use client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useEffect, useState, useRef, useCallback, useMemo } from "react";
-import {
-  ChevronDown,
-  ChevronUp,
-  Upload,
-  X,
-  Search,
-  Plus,
-  Trash2,
-  Save,
-  RefreshCw,
-  Star,
-  Clock,
-  Copy,
-} from "lucide-react";
 
 type Product = {
   id: string;
@@ -316,14 +302,19 @@ export default function AdminPage() {
   );
 
   useEffect(() => {
-    const admin = localStorage.getItem("admin");
-    if (admin !== "ok") {
+  const checkAuth = async () => {
+    const res = await fetch("/api/admin/check");
+
+    if (!res.ok) {
       window.location.href = "/admin/login";
       return;
     }
-    loadMenu();
-  }, [loadMenu]);
 
+    loadMenu();
+  };
+
+  checkAuth();
+}, [loadMenu]);
   useEffect(() => {
     return () => {
       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);

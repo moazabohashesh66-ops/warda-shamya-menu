@@ -22,7 +22,7 @@ export default function LoginPage() {
 
       if (data.success) {
         // ✅ مش محتاج localStorage دلوقتي
-        window.location.href = "/admin";
+        window.location.replace("/admin");
       } else {
         setError("❌ كلمة المرور غير صحيحة");
       }
