@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
+let cachedMenu: any = null;
+let lastUpdate = 0;
+
+const CACHE_TIME = 1000 * 60 * 10; // 10 دقائق
+
 export async function GET() {
   try {
-    // جلب الأقسام
+    if (cachedMenu && Date.now() - lastUpdate < CACHE_TIME) {
+      return NextResponse.json(cachedMenu);
+    }
+
     const { data: categories, error: catError } = await supabaseAdmin
       .from("categories")
       .select("*")
@@ -11,7 +19,6 @@ export async function GET() {
 
     if (catError) throw catError;
 
-    // جلب المنتجات
     const { data: products, error: prodError } = await supabaseAdmin
       .from("products")
       .select("*")
@@ -19,7 +26,6 @@ export async function GET() {
 
     if (prodError) throw prodError;
 
-    // دمج المنتجات داخل الأقسام
     const menu = categories.map((category: any) => ({
       ...category,
       products: products.filter(
@@ -27,9 +33,12 @@ export async function GET() {
       ),
     }));
 
+    cachedMenu = menu;
+    lastUpdate = Date.now();
+
     return NextResponse.json(menu);
   } catch (error) {
-    console.error("GET ERROR:", error);
+    console.error(error);
 
     return NextResponse.json(
       {
@@ -47,11 +56,10 @@ export async function POST(req: Request) {
   try {
     const categories = await req.json();
 
-    // تحديث الأقسام
     for (const category of categories) {
       const { products, ...categoryData } = category;
 
-      const { error: catError } = await supabaseAdmin
+      await supabaseAdmin
         .from("categories")
         .update({
           name: categoryData.name,
@@ -61,11 +69,8 @@ export async function POST(req: Request) {
         })
         .eq("id", categoryData.id);
 
-      if (catError) throw catError;
-
-      // تحديث المنتجات
       for (const product of products) {
-        const { error: prodError } = await supabaseAdmin
+        await supabaseAdmin
           .from("products")
           .update({
             name: product.name,
@@ -80,16 +85,18 @@ export async function POST(req: Request) {
             is_new: product.is_new,
           })
           .eq("id", product.id);
-
-        if (prodError) throw prodError;
       }
     }
+
+    // حذف الكاش بعد الحفظ
+    cachedMenu = null;
+    lastUpdate = 0;
 
     return NextResponse.json({
       success: true,
     });
   } catch (error) {
-    console.error("POST ERROR:", error);
+    console.error(error);
 
     return NextResponse.json(
       {

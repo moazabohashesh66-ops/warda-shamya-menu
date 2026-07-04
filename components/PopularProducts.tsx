@@ -24,10 +24,29 @@ export default function PopularProducts() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    fetch("/api/menu")
-      .then((res) => res.json())
-      .then(setCategories)
-      .catch(console.error);
+    let mounted = true;
+
+    async function loadMenu() {
+      try {
+        const res = await fetch("/api/menu", {
+          cache: "force-cache",
+        });
+
+        const data = await res.json();
+
+        if (mounted) {
+          setCategories(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadMenu();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const products = useMemo(() => {
@@ -62,23 +81,17 @@ export default function PopularProducts() {
             <Flame size={18} className="text-red-400" />
 
             <span className="text-red-300 font-semibold">
-
               الأكثر طلباً
-
             </span>
 
           </div>
 
           <h2 className="text-5xl font-black text-white mt-8">
-
             أشهر الأكلات
-
           </h2>
 
           <p className="text-white/60 mt-6 max-w-2xl mx-auto">
-
             أشهر المنتجات التي يطلبها عملاؤنا يومياً.
-
           </p>
 
         </motion.div>
@@ -89,35 +102,21 @@ export default function PopularProducts() {
 
             <motion.div
               key={product.id}
-              initial={{
-                opacity: 0,
-                y: 40,
-              }}
-              whileInView={{
-                opacity: 1,
-                y: 0,
-              }}
-              viewport={{
-                once: true,
-              }}
-              transition={{
-                delay: index * 0.08,
-              }}
-              whileHover={{
-                y: -10,
-              }}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: index * 0.08 }}
+              whileHover={{ y: -10 }}
               className="rounded-3xl overflow-hidden bg-white/5 border border-white/10 backdrop-blur-xl"
             >
 
               <div className="relative h-56 overflow-hidden">
 
                 <Image
-                  fill
+                  src={product.image || "/images/foods.png"}
                   alt={product.name}
-                  src={
-                    product.image ||
-                    "https://images.unsplash.com/photo-1544025162-d76694265947?w=1000"
-                  }
+                  fill
+                  sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 25vw"
                   className="object-cover hover:scale-110 transition duration-700"
                 />
 
@@ -139,17 +138,13 @@ export default function PopularProducts() {
               <div className="p-6">
 
                 <h3 className="text-white text-xl font-bold">
-
                   {product.name}
-
                 </h3>
 
                 <div className="flex justify-between items-center mt-6">
 
                   <span className="text-yellow-400 font-black text-2xl">
-
                     {product.price} ج
-
                   </span>
 
                   <Link

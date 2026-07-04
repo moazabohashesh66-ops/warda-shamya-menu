@@ -22,12 +22,30 @@ export default function CategoriesPreview() {
   const [categories, setCategories] = useState<Category[]>([]);
 
   useEffect(() => {
-    fetch("/api/menu")
-      .then((res) => res.json())
-      .then((data) => setCategories(data))
-      .catch(console.error);
-  }, []);
+  let mounted = true;
 
+  async function loadMenu() {
+    try {
+      const res = await fetch("/api/menu", {
+        cache: "force-cache",
+      });
+
+      const data = await res.json();
+
+      if (mounted) {
+        setCategories(data);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  loadMenu();
+
+  return () => {
+    mounted = false;
+  };
+}, []);
   return (
     <section
       id="categories"
@@ -99,14 +117,15 @@ export default function CategoriesPreview() {
                 <div className="relative h-60">
 
                   <Image
-                    src={
-                      category.image ||
-                      "https://images.unsplash.com/photo-1544025162-d76694265947?w=1200"
-                    }
-                    alt={category.name}
-                    fill
-                    className="object-cover group-hover:scale-110 transition duration-700"
-                  />
+  src={
+    category.image ||
+    "/images/categories.jpg"
+  }
+  alt={category.name}
+  fill
+  sizes="(max-width:768px) 100vw, 33vw"
+  className="object-cover group-hover:scale-110 transition duration-700"
+/>
 
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
