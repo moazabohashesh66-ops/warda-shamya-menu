@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useMenu } from "@/hooks/useMenu";
 
 interface Product {
   id: string;
@@ -19,40 +19,62 @@ interface Category {
 }
 
 export default function CategoriesPreview() {
-  const [categories, setCategories] = useState<Category[]>([]);
+ const { categories, isLoading, error } = useMenu();
 
-  useEffect(() => {
-  let mounted = true;
+if (isLoading) {
+  return null; // سنضع Skeleton لاحقًا
+}
 
-  async function loadMenu() {
-    try {
-      const res = await fetch("/api/menu", {
-        cache: "force-cache",
-      });
+if (error) {
+  return null;
+}
+    let mounted = true;
 
-      const data = await res.json();
+    async function loadMenu() {
+      try {
+        const res = await fetch("/api/menu", {
+          cache: "no-store",
+        });
 
-      if (mounted) {
-        setCategories(data);
+        const data = await res.json();
+
+        console.log("========== API RESPONSE ==========");
+        console.log(data);
+        console.log("Is Array:", Array.isArray(data));
+
+        if (!mounted) return;
+
+        if (Array.isArray(data)) {
+          setCategories(data);
+        } else {
+          console.error("API did not return an array:", data);
+          setCategories([]);
+        }
+      } catch (err) {
+        console.error("Failed to load menu:", err);
+        if (mounted) {
+          setCategories([]);
+        }
       }
-    } catch (err) {
-      console.error(err);
     }
-  }
 
-  loadMenu();
+    loadMenu();
 
-  return () => {
-    mounted = false;
-  };
-}, []);
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  console.log("========== STATE ==========");
+  console.log(categories);
+  console.log("State Is Array:", Array.isArray(categories));
+
   return (
     <section
       id="categories"
       className="py-28 bg-[#120806]"
     >
       <div className="container mx-auto px-6">
-
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -60,125 +82,79 @@ export default function CategoriesPreview() {
           className="flex justify-between items-end mb-16"
         >
           <div>
-
             <span className="text-yellow-400 font-bold">
-
               MENU
-
             </span>
 
             <h2 className="text-5xl font-black text-white mt-3">
-
               أقسام المنيو
-
             </h2>
 
             <p className="text-white/60 mt-5">
-
               اختر القسم الذى يناسبك
-
             </p>
-
           </div>
-
-          
         </motion.div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-
-          {categories.slice(0, 6).map((category, index) => (
-
-            <motion.div
-              key={category.id}
-              initial={{
-                opacity: 0,
-                y: 40,
-              }}
-              whileInView={{
-                opacity: 1,
-                y: 0,
-              }}
-              viewport={{
-                once: true,
-              }}
-              transition={{
-                delay: index * .12,
-              }}
-              whileHover={{
-                y: -12,
-              }}
-            >
-
-              <Link
-                href={`/menu/${category.id}`}
-                className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl block"
+          {(Array.isArray(categories) ? categories : [])
+            .slice(0, 6)
+            .map((category, index) => (
+              <motion.div
+                key={category.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{
+                  delay: index * 0.12,
+                }}
+                whileHover={{ y: -12 }}
               >
+                <Link
+                  href={`/menu/${category.id}`}
+                  className="group overflow-hidden rounded-3xl border border-white/10 bg-white/5 backdrop-blur-xl block"
+                >
+                  <div className="relative h-60">
+                    <Image
+                      src={category.image || "/images/categories.jpg"}
+                      alt={category.name}
+                      fill
+                      sizes="(max-width:768px) 100vw, 33vw"
+                      className="object-cover group-hover:scale-110 transition duration-700"
+                    />
 
-                <div className="relative h-60">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
-                  <Image
-  src={
-    category.image ||
-    "/images/categories.jpg"
-  }
-  alt={category.name}
-  fill
-  sizes="(max-width:768px) 100vw, 33vw"
-  className="object-cover group-hover:scale-110 transition duration-700"
-/>
-
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-
-                  <div className="absolute bottom-6 right-6">
-
-                    <div className="text-5xl">
-
-                      {category.icon}
-
+                    <div className="absolute bottom-6 right-6">
+                      <div className="text-5xl">
+                        {category.icon}
+                      </div>
                     </div>
-
                   </div>
 
-                </div>
+                  <div className="p-7">
+                    <h3 className="text-2xl font-bold text-white">
+                      {category.name}
+                    </h3>
 
-                <div className="p-7">
-
-                  <h3 className="text-2xl font-bold text-white">
-
-                    {category.name}
-
-                  </h3>
-
-                  <p className="text-white/50 mt-3">
-
-                    {category.products.length} منتج
-
-                  </p>
-
-                </div>
-
-              </Link>
-
-            </motion.div>
-
-          ))}
-
+                    <p className="text-white/50 mt-3">
+                      {category.products?.length ?? 0} منتج
+                    </p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
         </div>
 
         <div className="text-center mt-16 lg:hidden">
-
           <Link
             href="/menu"
             className="inline-flex items-center gap-3 bg-yellow-500 text-black px-8 py-4 rounded-2xl font-bold"
           >
             عرض المنيو
-
             <ArrowLeft size={18} />
-
           </Link>
-
         </div>
-
       </div>
     </section>
   );

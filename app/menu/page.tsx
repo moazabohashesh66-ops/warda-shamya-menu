@@ -55,6 +55,7 @@ export default function MenuPage() {
           src={category.image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=400&fit=crop"}
           alt={category.name}
           fill
+          sizes="100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
@@ -89,6 +90,7 @@ export default function MenuPage() {
                   src={product.image || "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&h=300&fit=crop"}
                   alt={product.name}
                   fill
+                  sizes="(max-width:768px) 50vw, 25vw"
                   className="object-cover"
                 />
                 {product.isPopular && (

@@ -84,7 +84,7 @@ export default function Navbar() {
           </button>
 
           <a
-            href="https://wa.me/201013839628"
+            href="https://wa.me/201111211331"
             target="_blank"
             rel="noopener noreferrer"
             className="text-white hover:text-yellow-400 transition"
@@ -137,7 +137,7 @@ export default function Navbar() {
           </button>
 
           <a
-            href="https://wa.me/201013839628"
+            href="https://wa.me/201111211331"
             target="_blank"
             rel="noopener noreferrer"
             onClick={closeMenu}
